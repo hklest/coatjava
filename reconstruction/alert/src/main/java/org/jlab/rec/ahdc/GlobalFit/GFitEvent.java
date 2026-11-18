@@ -18,6 +18,8 @@ public final class GFitEvent {
 	/** ATOF rows: position, bar flag, sector, layer, component, bank time, final time. */
 	public double[] ax, ay, az, tBank, tFinal;
 	public boolean[] isBar;
+	/** ATOF energy per row (ATOF::hits.energy) and the corrected time of {@link AtofTimeCorrection}; both null unless the time switch is on. */
+	public double[] aEnergy, aTime;
 	public int[] sector, layer, comp;
 
 	/** ATOF candidates as the fit consumes them (atof.attach): row in the event ATOF rows, bar-z corrected z, phi, association weight, bar flag, time - start (final, bank), sector, component. */

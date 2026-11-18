@@ -63,6 +63,8 @@ public final class GFitConfig {
 	private double c95 = 0.351160986443719;
 	/** recovery refits start from the baseline state; false, as the measurement recorded in search_measure.json. */
 	private boolean refitSeeded = false;
+	/** ATOF time correction (SwitchConstants.TimeChannels, AtofTimeCorrection) and the dE/dx term on or off; both off in the Python default. Not part of cf()/ci(). */
+	private boolean timeOn = false, dedxOn = false;
 
 	private GFitConfig() {}
 
@@ -77,6 +79,7 @@ public final class GFitConfig {
 		c.recKRes = recKRes; c.errScale = errScale; c.recDropWorst = recDropWorst; c.recQ = recQ; c.recRounds = recRounds; c.recPoolW = recPoolW;
 		c.recTStockLo = recTStockLo; c.recTStockHi = recTStockHi;
 		c.search = search; c.fastRule = fastRule; c.c95 = c95; c.refitSeeded = refitSeeded;
+		c.timeOn = timeOn; c.dedxOn = dedxOn;
 		return c;
 	}
 
@@ -97,6 +100,9 @@ public final class GFitConfig {
 
 	/** electron-vertex z prior on or off (off for an event without an electron, plan D14). */
 	public GFitConfig withZPrior(boolean on) { GFitConfig c = copy(); c.zOn = on; return c; }
+
+	/** ATOF time correction switch (time_offsets, walk and T0 tables, SwitchConstants) and dE/dx term switch. */
+	public GFitConfig withSwitches(boolean time, boolean dedx) { GFitConfig c = copy(); c.timeOn = time; c.dedxOn = dedx; return c; }
 
 	public double bz() { return bz; }
 	public double beamX() { return beamX; }
@@ -128,6 +134,8 @@ public final class GFitConfig {
 	public int fastRule() { return fastRule; }
 	public double c95() { return c95; }
 	public boolean refitSeeded() { return refitSeeded; }
+	public boolean timeOn() { return timeOn; }
+	public boolean dedxOn() { return dedxOn; }
 	public double recTLo() { return recTLo; }
 	public double recTHi() { return recTHi; }
 	public double recTotMin() { return recTotMin; }
