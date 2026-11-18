@@ -483,6 +483,170 @@
       }
     ]
   }, {
+    "name": "AHDC::gtrack",
+    "group": 23000,
+    "item": 28,
+    "info": "Reco global fit tracks, one row per AHDC::kftrack row",
+    "entries": [
+      {
+        "name": "trackid",
+        "type": "I",
+        "info": "track id, as AHDC::kftrack"
+      }, {
+        "name": "status",
+        "type": "B",
+        "info": "fit status: -1 not fitted, 0 converged, 1 converged with fewer hits, 2 fewer than 3 hits, 3 not converged, 4 exception"
+      }, {
+        "name": "flags",
+        "type": "S",
+        "info": "bit flags: Python bits 1-32; 64 no electron vertex, 128 seed from helix fit, 256 time term used"
+      }, {
+        "name": "x",
+        "type": "F",
+        "info": "x of the point of closest approach to the beam line in mm"
+      }, {
+        "name": "y",
+        "type": "F",
+        "info": "y of the point of closest approach to the beam line in mm"
+      }, {
+        "name": "z",
+        "type": "F",
+        "info": "z of the point of closest approach to the beam line in mm"
+      }, {
+        "name": "px",
+        "type": "F",
+        "info": "px in MeV"
+      }, {
+        "name": "py",
+        "type": "F",
+        "info": "py in MeV"
+      }, {
+        "name": "pz",
+        "type": "F",
+        "info": "pz in MeV"
+      }, {
+        "name": "d0",
+        "type": "F",
+        "info": "signed distance of closest approach to the beam line in mm"
+      }, {
+        "name": "phi0",
+        "type": "F",
+        "info": "azimuth of the momentum at closest approach in rad"
+      }, {
+        "name": "p",
+        "type": "F",
+        "info": "momentum in MeV"
+      }, {
+        "name": "z0",
+        "type": "F",
+        "info": "z at closest approach in mm"
+      }, {
+        "name": "theta",
+        "type": "F",
+        "info": "polar angle in rad"
+      }, {
+        "name": "c00",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 0,0"
+      }, {
+        "name": "c01",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 0,1"
+      }, {
+        "name": "c02",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 0,2"
+      }, {
+        "name": "c03",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 0,3"
+      }, {
+        "name": "c04",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 0,4"
+      }, {
+        "name": "c11",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 1,1"
+      }, {
+        "name": "c12",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 1,2"
+      }, {
+        "name": "c13",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 1,3"
+      }, {
+        "name": "c14",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 1,4"
+      }, {
+        "name": "c22",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 2,2"
+      }, {
+        "name": "c23",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 2,3"
+      }, {
+        "name": "c24",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 2,4"
+      }, {
+        "name": "c33",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 3,3"
+      }, {
+        "name": "c34",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 3,4"
+      }, {
+        "name": "c44",
+        "type": "F",
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 4,4"
+      }, {
+        "name": "cost",
+        "type": "F",
+        "info": "final cost"
+      }, {
+        "name": "n_hits",
+        "type": "S",
+        "info": "number of hits in the fit"
+      }, {
+        "name": "n_added",
+        "type": "S",
+        "info": "number of hits added by recovery"
+      }, {
+        "name": "n_iter",
+        "type": "S",
+        "info": "number of Levenberg-Marquardt iterations"
+      }, {
+        "name": "n_min",
+        "type": "S",
+        "info": "number of distinct minima found"
+      }, {
+        "name": "atof_sector",
+        "type": "B",
+        "info": "associated ATOF sector, -1 if none"
+      }, {
+        "name": "atof_layer",
+        "type": "B",
+        "info": "associated ATOF layer, -1 if none"
+      }, {
+        "name": "atof_component",
+        "type": "B",
+        "info": "associated ATOF component, -1 if none"
+      }, {
+        "name": "p_dedx",
+        "type": "F",
+        "info": "momentum from the dE/dx profile in MeV, NaN unless gfitDedx"
+      }, {
+        "name": "sig_p_dedx",
+        "type": "F",
+        "info": "uncertainty of p_dedx in MeV, NaN unless gfitDedx"
+      }
+    ]
+  }, {
     "name": "AHDC::mc",
     "group": 23000,
     "item": 22,

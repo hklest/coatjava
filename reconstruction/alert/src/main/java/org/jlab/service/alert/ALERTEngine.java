@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Iterator;
 
@@ -82,7 +83,15 @@ import org.jlab.rec.alert.AIPID.PIDResult;
  *     ALERT:
  *       Mode: "AI_GNN"   # track-finding strategy; see TrackFindingMode
  *                        # (AI_MLP | CV_Distance | CV_Hough | AI_GNN)
+ *       gfit: "false"          # event-level global track fit, writes AHDC::gtrack
+ *       gfitRecovery: "true"   # hit recovery after the fit (only with gfit)
+ *       gfitTime: "false"      # ATOF time term in the fit (only with gfit)
+ *       gfitDedx: "false"      # dE/dx profile momentum (only with gfit)
  * }</pre>
+ *
+ * The four {@code gfit*} keys accept only "true" or "false"; any other value
+ * makes {@link #init()} fail. With {@code gfit} off the engine output is
+ * unchanged.
  *
  * @author  Whit Armstrong
  * @author  Noemie Pilleux
@@ -126,6 +135,49 @@ public class ALERTEngine extends ReconstructionEngine {
     // AHDC calibration table (refreshed on run change)
     private IndexedTable ahdcAdcGainsTable;
 
+    // Global track fit switches (ALERT.gfit* YAML keys)
+    private boolean gfitOn = false;
+    private boolean gfitRecovery = true;
+    private boolean gfitTime = false;
+    private boolean gfitDedx = false;
+
+    boolean isGfitOn() { return gfitOn; }
+    boolean isGfitRecovery() { return gfitRecovery; }
+    boolean isGfitTime() { return gfitTime; }
+    boolean isGfitDedx() { return gfitDedx; }
+
+    /**
+     * Read the gfit* YAML keys and register AHDC::gtrack when gfit is on.
+     * @return false if a key holds anything other than "true" or "false"
+     */
+    boolean readGfitConfig() {
+        return readGfitConfig(this::getEngineConfigString);
+    }
+
+    boolean readGfitConfig(Function<String, String> config) {
+        Boolean on = readSwitch(config, "gfit", false);
+        Boolean recovery = readSwitch(config, "gfitRecovery", true);
+        Boolean time = readSwitch(config, "gfitTime", false);
+        Boolean dedx = readSwitch(config, "gfitDedx", false);
+        if (on == null || recovery == null || time == null || dedx == null) return false;
+        gfitOn = on;
+        gfitRecovery = recovery;
+        gfitTime = time;
+        gfitDedx = dedx;
+        if (gfitOn) this.registerOutputBank("AHDC::gtrack");
+        return true;
+    }
+
+    /** Parse a "true"/"false" YAML switch; absent keeps the default, anything else is an error. */
+    private static Boolean readSwitch(Function<String, String> config, String key, boolean def) {
+        String v = config.apply(key);
+        if (v == null) return def;
+        if ("true".equals(v)) return Boolean.TRUE;
+        if ("false".equals(v)) return Boolean.FALSE;
+        LOGGER.severe("Invalid option parsed for ALERT " + key + ": " + v);
+        return null;
+    }
+
     public void setB(double B) {
         this.b = B;
     }
@@ -156,6 +208,8 @@ public class ALERTEngine extends ReconstructionEngine {
      */
     @Override
     public boolean init() {
+
+        if (!readGfitConfig()) return false;
 
         rbc = new RecoBankWriter();
 
@@ -753,6 +807,15 @@ public class ALERTEngine extends ReconstructionEngine {
         org.jlab.rec.ahdc.Banks.RecoBankWriter ahdc_writer = new org.jlab.rec.ahdc.Banks.RecoBankWriter();
         DataBank recoKFTracksBank   = ahdc_writer.fillAHDCKFTrackBank(event, AHDC_tracks);
         event.appendBank(recoKFTracksBank);
+        if (gfitOn) {
+            // Placeholder rows (status -1), one per KF track, replaced by the global fit.
+            DataBank gtrackBank = event.createBank("AHDC::gtrack", AHDC_tracks.size());
+            for (int row = 0; row < AHDC_tracks.size(); row++) {
+                gtrackBank.setInt("trackid", row, AHDC_tracks.get(row).get_trackId());
+                gtrackBank.setByte("status", row, (byte) -1);
+            }
+            event.appendBank(gtrackBank);
+        }
         /// Update the AHDC::hits bank : fill the residuals
         event.removeBank("AHDC::hits");
         ArrayList<Hit> AHDC_hits = new ArrayList<>();
