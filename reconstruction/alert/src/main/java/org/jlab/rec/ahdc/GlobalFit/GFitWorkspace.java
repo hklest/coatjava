@@ -66,6 +66,9 @@ public final class GFitWorkspace {
 	/** when true, predict() records the ATOF intercepts of the nominal and the 15 perturbed runs in ia[16 * NI] (set by the ATOF user). */
 	public boolean atofOn;
 	public final double[] ia = new double[16 * 20];
+	/** ATOF candidates and scratch of the current track (AtofTerm.attach) and the ATOF cost of the last cost(). */
+	public final AtofTerm.TrackState atof = new AtofTerm.TrackState();
+	public double fAtof;
 	/** scratch of predict and cost. */
 	final int[] PF1;
 	final double[] pcaG, pcaD, pcaR = new double[12], nomX, pertD, pertX, gradG, upert = new double[NPAR];

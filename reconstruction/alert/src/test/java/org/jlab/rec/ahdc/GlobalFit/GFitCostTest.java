@@ -166,6 +166,67 @@ public class GFitCostTest {
 		assertTrue(wHe <= 1e-6);
 	}
 
+	/** ATOF term on (fit.py:428): intercept records, total cost, gradient and both Hessians against the stored totals. */
+	@Test
+	public void atofOnMatchesPython() {
+		GFitFixtures.Fx ca = GFitFixtures.resource("unit/cost_atof.txt.gz");
+		GFitFixtures.Fx tabs = GFitFixtures.resource("unit/atof_tables.txt.gz");
+		int ns = cs.shape("cs_u")[0];
+		int[] sub = cs.i("cs_sub"), trk = cs.i("cs_track"), half = ca.i("ca_half"), coff = ca.i("ca_coff"), cbar = ca.i("ca_cbar");
+		double[] ea = cs.d("cs_ia_fd"), eF = cs.d("cs_F"), eg = cs.d("cs_g"), eHc = cs.d("cs_Hc_tri"), eHe = cs.d("cs_He_tri");
+		double[] cz = ca.d("ca_cz"), cphi = ca.d("ca_cphi"), cct = ca.d("ca_ct");
+		int[] subIdx = new int[ns];
+		java.util.Arrays.fill(subIdx, -1);
+		for (int k = 0; k < sub.length; k++) subIdx[sub[k]] = k;
+		GFitWorkspace ws = new GFitWorkspace(64);
+		ws.atofOn = true;
+		double wIa = 0, wF = 0, wG = 0, wHc = 0, wHe = 0;
+		for (int s = 0; s < ns; s++) {
+			AtofTerm.TrackState st = ws.atof;
+			int t = trk[s], c0 = coff[t], c1 = coff[t + 1];
+			st.grow(c1 - c0);
+			for (int c = c0; c < c1; c++) {
+				st.cz[c - c0] = cz[c]; st.cphi[c - c0] = cphi[c]; st.ct[c - c0] = cct[c]; st.cbar[c - c0] = cbar[c];
+			}
+			st.ncand = c1 - c0;
+			st.par = tabs.row("par_23014", half[t]);
+			run(s, ws, true);
+			wF = Math.max(wF, Math.abs(lastF - eF[s]) / Math.abs(eF[s]));
+			double gn = 0, dn = 0;
+			for (int j = 0; j < NPAR; j++) {
+				gn += eg[s * NPAR + j] * eg[s * NPAR + j];
+				dn += (ws.g[j] - eg[s * NPAR + j]) * (ws.g[j] - eg[s * NPAR + j]);
+			}
+			wG = Math.max(wG, Math.sqrt(dn) / Math.max(Math.sqrt(gn), 1.0));
+			int q = subIdx[s];
+			if (q < 0) continue;
+			for (int i = 0; i < 16 * 20; i++) wIa = Math.max(wIa, dev(ws.ia[i], ea[q * 320 + i]));
+			wHc = Math.max(wHc, triDev(ws.hc, eHc, q));
+			wHe = Math.max(wHe, triDev(ws.he, eHe, q));
+		}
+		System.out.printf("ATOF on: records %.3e, total F %.3e (1e-9), gradient %.3e of max(|g|,1) (1e-6), Hc %.3e, He %.3e (1e-6)%n",
+			wIa, wF, wG, wHc, wHe);
+		assertTrue(wIa <= 1e-9);
+		assertTrue(wF <= 1e-9);
+		assertTrue(wG <= 1e-6);
+		assertTrue(wHc <= 1e-6);
+		assertTrue(wHe <= 1e-6);
+	}
+
+	/** Frobenius deviation of a full symmetric matrix against stored upper triangle row q, relative to the stored norm. */
+	private static double triDev(double[] h, double[] tri, int q) {
+		double en = 0, dn = 0;
+		int k = 0;
+		for (int j = 0; j < NPAR; j++) {
+			for (int m = j; m < NPAR; m++, k++) {
+				double e = tri[q * 120 + k], d = h[j * NPAR + m] - e, w = (m == j) ? 1.0 : 2.0;
+				en += w * e * e;
+				dn += w * d * d;
+			}
+		}
+		return Math.sqrt(dn / en);
+	}
+
 	@Test
 	public void restartGradientEqualsFull() {
 		GFitWorkspace a = new GFitWorkspace(64), b = new GFitWorkspace(64);

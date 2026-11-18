@@ -205,7 +205,11 @@ public final class TrackCost {
 				he[0] += 2.0 / (sigD0 * sigD0);
 			}
 		}
-		// S3 hook: F += AtofTerm.termCost(...)
+		ws.fAtof = 0.0;
+		if (imodel == 1 && ws.atofOn) {      // ATOF position term (fit.py:428-429): value from the nominal record, derivatives through the FD records
+			ws.fAtof = AtofTerm.termCost(u, ws.ia, want, npar, ze, ws.atof, g, hc, he);
+			F += ws.fAtof;
+		}
 		if (npar > 5) {
 			double[] th = cfg.th0Mode() == 1 ? ws.th0 : th0f;
 			for (int j = 0; j < NK; j++) {
