@@ -486,7 +486,7 @@
     "name": "AHDC::gtrack",
     "group": 23000,
     "item": 28,
-    "info": "Reco global fit tracks, one row per AHDC::kftrack row",
+    "info": "Reco global fit tracks (ALERT gfit key), one row per AHDC::kftrack row, same order",
     "entries": [
       {
         "name": "trackid",
@@ -495,59 +495,59 @@
       }, {
         "name": "status",
         "type": "B",
-        "info": "fit status: -1 not fitted, 0 converged, 1 converged with fewer hits, 2 fewer than 3 hits, 3 not converged, 4 exception"
+        "info": "fit status: 0 ok, 1 not converged, 2 fewer than 3 hits, 3 propagation failure at a used hit, 4 non-finite result or exception"
       }, {
         "name": "flags",
         "type": "S",
-        "info": "bit flags: Python bits 1-32; 64 no electron vertex, 128 seed from helix fit, 256 time term used"
+        "info": "bit flags: 1 second minimum within cost 1, 2 p or theta outside the start grid, 4 covariance from the Gauss-Newton Hessian, 8 a hit flip won, 16 unused, 32 no ATOF row near the seed, 64 no electron vertex (z prior off), 128 seed from helix fit, 256 ATOF time term used"
       }, {
         "name": "x",
         "type": "F",
-        "info": "x of the point of closest approach to the beam line in mm"
+        "info": "x of the point of closest approach to the beam line in mm, NaN unless status 0"
       }, {
         "name": "y",
         "type": "F",
-        "info": "y of the point of closest approach to the beam line in mm"
+        "info": "y of the point of closest approach to the beam line in mm, NaN unless status 0"
       }, {
         "name": "z",
         "type": "F",
-        "info": "z of the point of closest approach to the beam line in mm"
+        "info": "z of the point of closest approach to the beam line in mm, NaN unless status 0"
       }, {
         "name": "px",
         "type": "F",
-        "info": "px in MeV"
+        "info": "px in MeV, NaN unless status 0"
       }, {
         "name": "py",
         "type": "F",
-        "info": "py in MeV"
+        "info": "py in MeV, NaN unless status 0"
       }, {
         "name": "pz",
         "type": "F",
-        "info": "pz in MeV"
+        "info": "pz in MeV, NaN unless status 0"
       }, {
         "name": "d0",
         "type": "F",
-        "info": "signed distance of closest approach to the beam line in mm"
+        "info": "signed distance of closest approach to the beam line in mm, NaN unless status 0"
       }, {
         "name": "phi0",
         "type": "F",
-        "info": "azimuth of the momentum at closest approach in rad"
+        "info": "azimuth of the momentum at closest approach in rad, NaN unless status 0"
       }, {
         "name": "p",
         "type": "F",
-        "info": "momentum in MeV"
+        "info": "momentum in MeV, NaN unless status 0"
       }, {
         "name": "z0",
         "type": "F",
-        "info": "z at closest approach in mm"
+        "info": "z at closest approach in mm, NaN unless status 0"
       }, {
         "name": "theta",
         "type": "F",
-        "info": "polar angle in rad"
+        "info": "polar angle in rad, NaN unless status 0"
       }, {
         "name": "c00",
         "type": "F",
-        "info": "covariance (d0, phi0, ln p, z0, theta) element 0,0"
+        "info": "covariance (d0, phi0, ln p, z0, theta) element 0,0, NaN unless status 0"
       }, {
         "name": "c01",
         "type": "F",
@@ -607,11 +607,11 @@
       }, {
         "name": "cost",
         "type": "F",
-        "info": "final cost"
+        "info": "final cost (-2 log likelihood), NaN for status 2 and 4"
       }, {
         "name": "n_hits",
         "type": "S",
-        "info": "number of hits in the fit"
+        "info": "number of hits in the final fit, recovered hits included"
       }, {
         "name": "n_added",
         "type": "S",
@@ -623,19 +623,19 @@
       }, {
         "name": "n_min",
         "type": "S",
-        "info": "number of distinct minima found"
+        "info": "number of distinct minima found (more than 3 sigma apart)"
       }, {
         "name": "atof_sector",
         "type": "B",
-        "info": "associated ATOF sector, -1 if none"
+        "info": "ATOF::hits sector of the most probable wedge hit at the fitted state, -1 if none or status not 0"
       }, {
         "name": "atof_layer",
         "type": "B",
-        "info": "associated ATOF layer, -1 if none"
+        "info": "ATOF::hits layer of the most probable wedge hit at the fitted state, -1 if none or status not 0"
       }, {
         "name": "atof_component",
         "type": "B",
-        "info": "associated ATOF component, -1 if none"
+        "info": "ATOF::hits component of the most probable wedge hit at the fitted state, -1 if none or status not 0"
       }, {
         "name": "p_dedx",
         "type": "F",

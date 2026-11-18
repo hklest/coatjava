@@ -34,6 +34,7 @@ import org.jlab.rec.ahdc.AHDCCluster.AHDCCluster;
 import org.jlab.rec.ahdc.DocaCluster.DocaCluster;
 import org.jlab.rec.ahdc.DocaCluster.DocaClusterRefiner;
 import org.jlab.rec.ahdc.HelixFit.HelixFitJava;
+import org.jlab.rec.ahdc.GlobalFit.GFitConfig;
 import org.jlab.rec.ahdc.KalmanFilter.KalmanFilter;
 import org.jlab.rec.ahdc.KalmanFilter.RadialKFHit;
 import org.jlab.rec.ahdc.TrackFindingMode;
@@ -87,11 +88,18 @@ import org.jlab.rec.alert.AIPID.PIDResult;
  *       gfitRecovery: "true"   # hit recovery after the fit (only with gfit)
  *       gfitTime: "false"      # ATOF time term in the fit (only with gfit)
  *       gfitDedx: "false"      # dE/dx profile momentum (only with gfit)
+ *       gfitSearch: "fast"     # start search of the fit: "fast" or "full"
  * }</pre>
  *
- * The four {@code gfit*} keys accept only "true" or "false"; any other value
- * makes {@link #init()} fail. With {@code gfit} off the engine output is
- * unchanged.
+ * The four switches {@code gfit}, {@code gfitRecovery}, {@code gfitTime} and
+ * {@code gfitDedx} accept only "true" or "false", {@code gfitSearch} only "fast"
+ * or "full"; any other value makes {@link #init()} fail. With {@code gfit} off
+ * the engine output is unchanged and nothing of the fit is loaded. With it on,
+ * the fit runs after the second Kalman-filter pass and needs the CCDB tables
+ * /geometry/beam/position, /geometry/alert/ahdc/beam_offset,
+ * /calibration/alert/atof/gfit_position and /calibration/alert/atof/gfit_bar_z
+ * (plus /calibration/alert/ahdc/time_offsets and time_to_distance_wire with
+ * recovery); for a run that lacks one, AHDC::gtrack is not written.
  *
  * @author  Whit Armstrong
  * @author  Noemie Pilleux
@@ -140,15 +148,20 @@ public class ALERTEngine extends ReconstructionEngine {
     private boolean gfitRecovery = true;
     private boolean gfitTime = false;
     private boolean gfitDedx = false;
+    private GFitConfig.Search gfitSearch = GFitConfig.Search.FAST;
+    /** global track fit, constructed in init() only when gfit is on. */
+    private GFitEngineAdapter gfit;
 
     boolean isGfitOn() { return gfitOn; }
     boolean isGfitRecovery() { return gfitRecovery; }
     boolean isGfitTime() { return gfitTime; }
     boolean isGfitDedx() { return gfitDedx; }
+    GFitConfig.Search getGfitSearch() { return gfitSearch; }
 
     /**
      * Read the gfit* YAML keys and register AHDC::gtrack when gfit is on.
-     * @return false if a key holds anything other than "true" or "false"
+     * @return false if a switch holds anything other than "true" or "false",
+     *         or gfitSearch anything other than "fast" or "full"
      */
     boolean readGfitConfig() {
         return readGfitConfig(this::getEngineConfigString);
@@ -159,7 +172,12 @@ public class ALERTEngine extends ReconstructionEngine {
         Boolean recovery = readSwitch(config, "gfitRecovery", true);
         Boolean time = readSwitch(config, "gfitTime", false);
         Boolean dedx = readSwitch(config, "gfitDedx", false);
-        if (on == null || recovery == null || time == null || dedx == null) return false;
+        String search = config.apply("gfitSearch");
+        GFitConfig.Search mode = search == null || "fast".equals(search) ? GFitConfig.Search.FAST
+                : "full".equals(search) ? GFitConfig.Search.FULL : null;
+        if (mode == null) LOGGER.severe("Invalid option parsed for ALERT gfitSearch: " + search);
+        if (on == null || recovery == null || time == null || dedx == null || mode == null) return false;
+        gfitSearch = mode;
         gfitOn = on;
         gfitRecovery = recovery;
         gfitTime = time;
@@ -219,6 +237,10 @@ public class ALERTEngine extends ReconstructionEngine {
 
         Map<String, Integer> tableMap = new HashMap<>();
         tableMap.put("/calibration/alert/ahdc/gains", 3);
+        if (gfitOn) {
+            gfit = new GFitEngineAdapter(gfitSearch, gfitRecovery);
+            tableMap.putAll(gfit.requiredTables());
+        }
         requireConstants(tableMap);
         this.getConstantsManager().setVariation("default");
 
@@ -807,14 +829,10 @@ public class ALERTEngine extends ReconstructionEngine {
         org.jlab.rec.ahdc.Banks.RecoBankWriter ahdc_writer = new org.jlab.rec.ahdc.Banks.RecoBankWriter();
         DataBank recoKFTracksBank   = ahdc_writer.fillAHDCKFTrackBank(event, AHDC_tracks);
         event.appendBank(recoKFTracksBank);
-        if (gfitOn) {
-            // Placeholder rows (status -1), one per KF track, replaced by the global fit.
-            DataBank gtrackBank = event.createBank("AHDC::gtrack", AHDC_tracks.size());
-            for (int row = 0; row < AHDC_tracks.size(); row++) {
-                gtrackBank.setInt("trackid", row, AHDC_tracks.get(row).get_trackId());
-                gtrackBank.setByte("status", row, (byte) -1);
-            }
-            event.appendBank(gtrackBank);
+        if (gfit != null) {
+            // Global track fit of every KF track on its hits after the second pass, alongside the KF: AHDC::gtrack
+            gfit.process(event, newRun, AHDC, (r, table) -> this.getConstantsManager().getConstants(r, table),
+                    AHDC_tracks, recoKFTracksBank, trackBank, runBank, IsMC);
         }
         /// Update the AHDC::hits bank : fill the residuals
         event.removeBank("AHDC::hits");
