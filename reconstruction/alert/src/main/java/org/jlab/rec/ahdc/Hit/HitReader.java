@@ -65,6 +65,21 @@ public class HitReader {
 	 * @return the DOCA in mm
 	 */
 	private double T2Dfunction(int sector, int layer, int wire, double time, IndexedTable timeToDistanceWireTable){
+		return timeToDistance(sector, layer, wire, time, timeToDistanceWireTable);
+	}
+
+	/**
+	 * The time-to-distance conversion of the hit reader ({@link #T2Dfunction}), public for the global track fit's hit
+	 * recovery, which converts {@code AHDC::adc} rows that are not on a track the same way.
+	 *
+	 * @param sector                  AHDC sector index
+	 * @param layer                   packed layer index ({@code superlayer*10 + layer})
+	 * @param wire                    wire (component) id within the layer
+	 * @param time                    calibrated drift time in ns
+	 * @param timeToDistanceWireTable per-wire T2D calibration table
+	 * @return the DOCA in mm
+	 */
+	public static double timeToDistance(int sector, int layer, int wire, double time, IndexedTable timeToDistanceWireTable) {
 		long hash = timeToDistanceWireTable.getList().getIndexGenerator().hashCode(sector, layer, wire);
 		List<Double> t2d = timeToDistanceWireTable.getDoublesByHash(hash);
 

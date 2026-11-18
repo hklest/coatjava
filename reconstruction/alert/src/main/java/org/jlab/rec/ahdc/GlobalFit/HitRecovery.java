@@ -286,7 +286,7 @@ public final class HitRecovery {
 	}
 
 	/** Hit.getMeasurementNoiseMatrix sigma [mm] before errscale (fit.kf_error, fit.py:930-934). */
-	static double kfError(double adc, double t) {
+	public static double kfError(double adc, double t) {
 		double ea = (1.15146 * adc + 437.63) / (3.21187 * adc + 878.855);
 		double et = (0.4423 * t + 13.7215) / (0.846038 * t + 31.9867);
 		return ea * et / 0.471;

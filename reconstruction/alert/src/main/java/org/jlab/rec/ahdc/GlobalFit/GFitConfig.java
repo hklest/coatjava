@@ -92,6 +92,12 @@ public final class GFitConfig {
 
 	public GFitConfig withStarts(Starts s) { GFitConfig c = copy(); c.starts = s; return c; }
 
+	/** beam position (x, y) in mm, AHDC frame: the CCDB value of the run (plan D8) in place of the Python default (-1.05, 0). */
+	public GFitConfig withBeam(double x, double y) { GFitConfig c = copy(); c.beamX = x; c.beamY = y; return c; }
+
+	/** electron-vertex z prior on or off (off for an event without an electron, plan D14). */
+	public GFitConfig withZPrior(boolean on) { GFitConfig c = copy(); c.zOn = on; return c; }
+
 	public double bz() { return bz; }
 	public double beamX() { return beamX; }
 	public double beamY() { return beamY; }

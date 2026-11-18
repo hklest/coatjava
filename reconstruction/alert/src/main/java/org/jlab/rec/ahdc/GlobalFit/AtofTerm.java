@@ -300,6 +300,35 @@ public final class AtofTerm {
 		return fv;
 	}
 
+	// ================================================================== association at the fitted state
+
+	/**
+	 * Per-layer association at the fitted state u (atof.diag_nb, atof.py:297-327): propagates u with its kinks u[5..14], takes
+	 * the intercept record into rec (length at least 20) and evaluates each layer (0 bar, 1 wedge) against the
+	 * candidates of st (filled by {@link #attach}). out[2 L] = posterior hit probability of layer L, out[2 L + 1] = index in st
+	 * of its most probable candidate (-1 none).
+	 */
+	public static void associate(double[] u, Propagator prop, GFitWorkspace ws, TrackState st, double[] rec, double[] out) {
+		final boolean save = ws.saveSnapshots;
+		ws.saveSnapshots = false;
+		int nn = prop.run(u, ws);
+		ws.saveSnapshots = save;
+		for (int q = 0; q < NI; q++) rec[q] = 0.0;
+		Propagator.atofIntercepts(ws.out, nn, ws.regnode, ws.aux, prop.stack().rOut, rec, 0);
+		final double[] par = st.par, x = st.x;
+		for (int L = 0; L < 2; L++) {
+			int o = 8 * L;
+			boolean zmid = par[P_ZMID] > 0.5;
+			x[0] = zmid ? rec[16 + 2 * L] : rec[o];
+			x[1] = zmid ? rec[17 + 2 * L] : rec[o + 1];
+			x[3] = rec[o + 5];
+			x[2] = par[P_TRA] + par[P_TRB] * (par[P_TMODE] > 0.5 ? rec[o + 3] : rec[o + 2]);
+			layerEval(L, x, st, false);
+			out[2 * L] = st.info[0];
+			out[2 * L + 1] = st.info[1];
+		}
+	}
+
 	// ================================================================== attach
 
 	/** numpy.mod for a positive divisor. */
