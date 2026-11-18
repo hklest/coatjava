@@ -1,5 +1,7 @@
 package org.jlab.rec.ahdc.GlobalFit;
 
+import java.util.Arrays;
+
 /**
  * Hit recovery around the global fit: port of recover.py (the GE9 procedure, frozen windows of ge9_recover.json held by
  * {@link GFitConfig}) for one track. Per round: crossed layers of the helix of the fitted state without a track hit are missing
@@ -8,7 +10,7 @@ package org.jlab.rec.ahdc.GlobalFit;
  * off (probe, recover.py:224-256); the best row per missing layer inside the windows (pass_windows, select, recover.py:274-292)
  * is added and the track refitted (the full search, plan D4 as amended); the refit is accepted when it converged and
  * F1 - F0 <= q n_add (_accept, recover.py:333-338); a rejected refit with two or more added rows is retried once without the
- * row of lowest likelihood at the refit state (one_round, recover.py:359-387). A second round runs on accepted tracks only, on top
+ * row of lowest likelihood in the refit's hit list (one_round, recover.py:359-387). A second round runs on accepted tracks only, on top
  * of the accepted rows and against the new result (recover, recover.py:392-420). Immutable and thread safe: all scratch is in
  * {@link GFitWorkspace#rec}; only the refit track objects are allocated, and only for a track with a selected row.
  */
@@ -58,10 +60,10 @@ public final class HitRecovery {
 		private void grow(int n) {
 			if (n <= cIdx.length) return;
 			int m = Math.max(n, 2 * cIdx.length);
-			cIdx = java.util.Arrays.copyOf(cIdx, m); cLi = java.util.Arrays.copyOf(cLi, m); cDw = java.util.Arrays.copyOf(cDw, m);
-			cG = java.util.Arrays.copyOf(cG, m); cIsm = java.util.Arrays.copyOf(cIsm, m);
-			cDoca = java.util.Arrays.copyOf(cDoca, m); cSig = java.util.Arrays.copyOf(cSig, m); cL = java.util.Arrays.copyOf(cL, m);
-			cD = java.util.Arrays.copyOf(cD, m); cS = java.util.Arrays.copyOf(cS, m); cPass = java.util.Arrays.copyOf(cPass, m);
+			cIdx = Arrays.copyOf(cIdx, m); cLi = Arrays.copyOf(cLi, m); cDw = Arrays.copyOf(cDw, m);
+			cG = Arrays.copyOf(cG, m); cIsm = Arrays.copyOf(cIsm, m);
+			cDoca = Arrays.copyOf(cDoca, m); cSig = Arrays.copyOf(cSig, m); cL = Arrays.copyOf(cL, m);
+			cD = Arrays.copyOf(cD, m); cS = Arrays.copyOf(cS, m); cPass = Arrays.copyOf(cPass, m);
 		}
 	}
 
@@ -100,13 +102,15 @@ public final class HitRecovery {
 			if (accept(s.r1, f0, st0, ns)) {
 				acc = t1; accRes = s.r1;
 			} else if (dropWorst && ns >= 2) {
-				// likelihood of the added rows at the refit state (est hit_l of the refit, recover.added_l); non-finite counts as -1e300
-				loadState(s.r1, s);
-				probe(s.u, ws, s);
+				// likelihood of each added row in the refit's hit list, matched by event row (recover.added_l); a row missing
+				// from it (a failed refit keeps no hits) or a non-finite value counts as -1e300
 				int worst = 0;
 				double lw = 0.0;
 				for (int i = 0; i < ns; i++) {
-					double l = s.cL[s.sel[i]];
+					int row = ev.pEv[s.cIdx[s.sel[i]]];
+					double l = Double.NaN;
+					for (int k = 0; k < s.r1.nh; k++)
+						if (s.r1.hitKind[k] != 2 && s.r1.hitRow[k] == row) { l = s.r1.hitL[k]; break; }
 					if (!(l - l == 0.0)) l = -1e300;
 					if (i == 0 || l < lw) { lw = l; worst = i; }
 				}
@@ -142,9 +146,9 @@ public final class HitRecovery {
 	/** the track with the selected candidates cand[0..n) appended to cur's hits (Python's augment: original hits first, then the added rows in layer order). */
 	GFitTrack extend(GFitTrack cur, GFitEvent ev, Scratch s, int[] cand, int n) {
 		int nb = cur.nHits(), nt = nb + n;
-		int[] hg = java.util.Arrays.copyOf(cur.hg, nt), hism = java.util.Arrays.copyOf(cur.hism, nt), hcls = java.util.Arrays.copyOf(cur.hcls, nt),
-			hrow = java.util.Arrays.copyOf(cur.hrow, nt);
-		double[] hm = java.util.Arrays.copyOf(cur.hm, nt), hsig = java.util.Arrays.copyOf(cur.hsig, nt), hh = java.util.Arrays.copyOf(cur.hh, nt);
+		int[] hg = Arrays.copyOf(cur.hg, nt), hism = Arrays.copyOf(cur.hism, nt), hcls = Arrays.copyOf(cur.hcls, nt),
+			hrow = Arrays.copyOf(cur.hrow, nt);
+		double[] hm = Arrays.copyOf(cur.hm, nt), hsig = Arrays.copyOf(cur.hsig, nt), hh = Arrays.copyOf(cur.hh, nt);
 		for (int i = 0; i < n; i++) {
 			int c = cand[i], k = nb + i;
 			hg[k] = s.cG[c]; hm[k] = s.cDoca[c]; hsig[k] = s.cSig[c]; hh[k] = geo.half[s.cG[c]]; hism[k] = s.cIsm[c]; hcls[k] = s.cLi[c];
@@ -185,7 +189,7 @@ public final class HitRecovery {
 		probe(s.u, ws, s);
 		// windows (pass_windows) and the best passing row per layer: largest l, the first of equal values (stable lexsort)
 		int[] best = s.keep;
-		java.util.Arrays.fill(best, -1);
+		Arrays.fill(best, -1);
 		for (int c = 0; c < s.nc; c++) {
 			int k = s.cIdx[c];
 			double res_ = s.cDoca[c] - Math.abs(s.cD[c]);
@@ -200,8 +204,8 @@ public final class HitRecovery {
 
 	/** recover.crossings for one track: ok (status 0 and finite state), crossed layers, crossing wires, track hits per layer; s.u = the internal state. */
 	private void crossings(GFitTrack cur, GFitResult res, GFitWorkspace ws, Scratch s) {
-		java.util.Arrays.fill(s.crossed, false); java.util.Arrays.fill(s.has, false); java.util.Arrays.fill(s.missing, false);
-		java.util.Arrays.fill(s.gstar, -1);
+		Arrays.fill(s.crossed, false); Arrays.fill(s.has, false); Arrays.fill(s.missing, false);
+		Arrays.fill(s.gstar, -1);
 		for (int k = 0; k < cur.nHits(); k++) s.has[geo.layerOf(cur.hg[k])] = true;
 		s.ok = loadState(res, s) && res.status == 0;
 		if (!s.ok) return;

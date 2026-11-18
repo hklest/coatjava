@@ -3,18 +3,16 @@ package org.jlab.rec.ahdc.GlobalFit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
  * HitRecovery on the 60-track subset t60 (full search, final ATOF times, per-half 23014 tables) against the pinned Python
  * recovery (recover.py): crossings and probe table at the stored baseline state, accepted rows and the result after recovery
- * (tiers 1-3 of parent plan D5), and the drop-worst retry. {@link #run} is also used by the scratch run over t500.
+ * (tiers 1-3 of parent plan D5), and the drop-worst retry.
  */
 public class GFitRecoveryTest {
 
@@ -44,11 +42,11 @@ public class GFitRecoveryTest {
 		cfg = GFitConfig.pythonDefault();
 		ft = GFitFullSearchTest.fitter(cfg);
 		hr = new HitRecovery(ft, new TrackCost(GFitFullSearchTest.prop, GFitFullSearchTest.geo, cfg), GFitFullSearchTest.geo, cfg);
-		if (t60 == null) t60 = run(set, new GFitWorkspace(maxHits), maxHits, true);
+		if (t60 == null) t60 = run(set, new GFitWorkspace(maxHits), maxHits);
 	}
 
 	/** base fit then recovery of every track of s; recovery time measured alone (refits included). */
-	static Run run(GFitReplaySet s, GFitWorkspace ws, int maxH, boolean quiet) {
+	static Run run(GFitReplaySet s, GFitWorkspace ws, int maxH) {
 		Run r = new Run();
 		int n = s.n;
 		r.base = new GFitResult[n]; r.after = new GFitResult[n];
@@ -179,8 +177,7 @@ public class GFitRecoveryTest {
 		int n1 = 0, ok1 = 0, n2 = 0, ok2 = 0, n3 = 0, ok3 = 0;
 		double wCost = 0, wPar = 0, wCov = 0, wCost3 = Double.NEGATIVE_INFINITY;
 		double[] cx = new double[25];
-		GFitFixtures.Fx a = s.after;
-		int[] at = a.i("acc_t"), aev = a.i("acc_ev");
+		int[] at = ex.i("acc_t"), aev = ex.i("acc_ev");
 		for (int k = 0; k < s.n; k++) {
 			GFitResult j = r.after[k];
 			String id = "trackid " + s.tracks[k].trackid + " row " + k + " tier " + s.tier[k];
@@ -247,21 +244,9 @@ public class GFitRecoveryTest {
 		GFitReplaySet s = set;
 		Run r = t60;
 		int k = firstRetry(r, s.n);
-		String src = "t60";
 		GFitWorkspace ws = new GFitWorkspace(maxHits);
-		if (k < 0) {
-			File dir = new File("/lcrc/project/jlab/klest/alert_lcrc/out/gfj/fixtures/t500");
-			Assume.assumeTrue("no drop-worst track in t60 and no t500 fixtures", dir.isDirectory());
-			s = GFitReplaySet.file(dir.getPath(), true);
-			int mh = 0;
-			for (GFitTrack t : s.tracks) mh = Math.max(mh, t.nHits());
-			ws = new GFitWorkspace(mh);
-			r = run(s, ws, mh, true);
-			k = firstRetry(r, s.n);
-			src = "t500";
-			Assume.assumeTrue("no drop-worst track in t60 or t500", k >= 0);
-		}
-		System.out.println("dropWorst: track " + k + " of " + src + " (trackid " + s.tracks[k].trackid + "), retries " + r.retries[k] + ", dropped event row " + r.dropEv0[k]);
+		assertTrue("t60 has a track whose first refit was rejected with two or more added rows", k >= 0);
+		System.out.println("dropWorst: track " + k + " of t60 (trackid " + s.tracks[k].trackid + "), retries " + r.retries[k] + ", dropped event row " + r.dropEv0[k]);
 		// the refit with all selected rows, its own hit l of the added rows: the lowest is the row dropped
 		HitRecovery.Scratch sc = ws.rec;
 		GFitTrack cur = s.tracks[k];
