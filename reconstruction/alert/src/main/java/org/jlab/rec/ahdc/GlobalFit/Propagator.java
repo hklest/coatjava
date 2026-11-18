@@ -138,6 +138,9 @@ public final class Propagator {
 	 * (theta, phi), momentum p exactly, d0 = 0 and all kinks zero (duplicate kink nodes are appended). Never saves snapshots.
 	 * Fills the same workspace fields as run(); returns the node count.
 	 */
+	/** the material stack this propagator steps through. */
+	public MaterialStack stack() { return stk; }
+
 	public int runSeed(double phi, double p, double theta, double z, GFitWorkspace ws) {
 		final double[] kin = ws.kin;
 		for (int j = 0; j < 2 * GFitWorkspace.NPL; j++) kin[j] = 0.0;

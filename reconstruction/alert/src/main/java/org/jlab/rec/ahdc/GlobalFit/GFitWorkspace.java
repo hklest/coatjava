@@ -42,7 +42,44 @@ public final class GFitWorkspace {
 		tmp = new double[8];
 	final double[] thseg = new double[NPL], xxseg = new double[NPL], betaseg = new double[NPL];
 
+
+	// ---- TrackCost (hit list, prediction and cost scratch; users: TrackCost, later GlobalTrackFitter) ----
+
+	/** capacity of the hit arrays: maxHits + NADD + NMISS (fit._fit_one maxn, fit.py:603). */
+	public final int cap;
+	/** active hit list: count, global wire, layer index, wire in layer, doca, smear class, sigma, half pitch, layer class, kind (0 hit), warm arc length, row in event. */
+	public int nh;
+	public final int[] lg, lli, lw, lism, lcls, lkind, lrow;
+	public final double[] lm, lsig, lh, sarc;
+	/** per hit prediction: signed d, cell margin s, flag (1 = no valid prediction), Jacobians [k * NPAR + j]. */
+	public final double[] D, S, JD, JS;
+	public final int[] PF;
+	/** per hit (l, d, s) of the last cost(): outH[k * 3 + {0, 1, 2}]. */
+	public final double[] outH;
+	/** Highland theta0 of the nominal propagation of the last predict (fit TH0); trajectory flags of the last predict. */
+	public final double[] th0 = new double[NPL];
+	public int tflag;
+	/** gradient, clipped Gauss-Newton and exact Hessians (full symmetric, NPAR x NPAR) of the last cost(want). */
+	public final double[] g = new double[NPAR], hc = new double[NPAR * NPAR], he = new double[NPAR * NPAR];
+	/** terms of the last cost(): hit, z prior, d0 prior, kink prior. */
+	public double fHit, fZ, fD0, fK;
+	/** when true, predict() records the ATOF intercepts of the nominal and the 15 perturbed runs in ia[16 * NI] (set by the ATOF user). */
+	public boolean atofOn;
+	public final double[] ia = new double[16 * 20];
+	/** scratch of predict and cost. */
+	final int[] PF1;
+	final double[] pcaG, pcaD, pcaR = new double[12], nomX, pertD, pertX, gradG, upert = new double[NPAR];
+	final double[] box3 = new double[3], cell4 = new double[4], o9 = new double[9], o9b = new double[9], jx5 = new double[5],
+		j53 = new double[15], sArc1 = new double[1];
+
 	public GFitWorkspace(int maxHits) {
+		cap = maxHits + 8 + 40;
+		lg = new int[cap]; lli = new int[cap]; lw = new int[cap]; lism = new int[cap]; lcls = new int[cap]; lkind = new int[cap]; lrow = new int[cap];
+		lm = new double[cap]; lsig = new double[cap]; lh = new double[cap]; sarc = new double[cap];
+		D = new double[cap]; S = new double[cap]; JD = new double[cap * NPAR]; JS = new double[cap * NPAR];
+		PF = new int[cap]; PF1 = new int[cap]; outH = new double[cap * 3];
+		pcaG = new double[NMAX]; pcaD = new double[NMAX];
+		nomX = new double[cap * 3]; pertD = new double[cap]; pertX = new double[cap * 3]; gradG = new double[cap * 3];
 		for (int j = 0; j < snap.length; j++) snap[j] = new Propagator.State();
 	}
 }
