@@ -346,8 +346,8 @@ public final class GlobalTrackFitter {
 	/**
 	 * Coarse grid of 8 momenta x 13 polar angles x 5 azimuth offsets around the seed phi with the helix model and the dbox
 	 * term, at z = ze; keeps the lowest costs whose theta differs by at least 10 degrees. Equal costs are not rare (every hit
-	 * saturated in the dbox gives a plateau of exactly equal sums), so the order is numpy's default argsort, reproduced by
-	 * {@link #argsortNumpy}. Fills ws.bestU (5 per start), ws.bestF and returns the number of starts.
+	 * saturated in the dbox gives a plateau of exactly equal sums), so the order is that of the reference's numba np.argsort, reproduced by
+	 * {@link #argsortNumba}. Fills ws.bestU (5 per start), ws.bestF and returns the number of starts.
 	 */
 	private int grid(double ze, double b0phi, GFitWorkspace ws) {
 		final int npv = 8, nth = 13;
@@ -379,8 +379,7 @@ public final class GlobalTrackFitter {
 		}
 		final int ng = q;
 		int[] ord = ws.gridOrd;
-		for (int i = 0; i < ng; i++) ord[i] = i;
-		argsortNumpy(gf, ng, ord, ws.gridTmp);
+		argsortNumba(gf, ng, ord, ws.gridTmp);
 		final double sep = 10.0 * Math.PI / 180.0 - 1e-9;
 		int nsel = 0;
 		for (int a = 0; a < ng; a++) {
@@ -405,77 +404,52 @@ public final class GlobalTrackFitter {
 	private static void swap(int[] t, int i, int j) { int x = t[i]; t[i] = t[j]; t[j] = x; }
 
 	/**
-	 * numpy's default {@code argsort} of v[0..n) (npy_aquicksort of numpy 1.23, the pinned reference: introsort, median-of-3
-	 * quicksort while more than 16 elements remain, insertion sort below, heapsort when the depth limit is exhausted) into t, which holds the
-	 * identity permutation on entry; equal keys end up in numpy's order. stk is scratch of at least 192 entries.
+	 * Literal port of the argsort of numba 0.59.1 for a float64 array (numba/misc/quicksort.py run_quicksort1 with is_argsort,
+	 * partition and insertion_sort, SMALL_QUICKSORT 15; numpy_support.lt_floats as the comparison; no heapsort fallback).
+	 * Reproduces the tie order of the reference's numba np.argsort: saturated dbox plateaus decide which starts are tried.
+	 * t receives the permutation of 0..n-1; stk is scratch for the partition stack (at least 200 ints).
 	 */
-	static void argsortNumpy(double[] v, int n, int[] t, int[] stk) {
-		int pl = 0, pr = n - 1, sp = 0, dp = 0;
-		int cdepth = 2 * (31 - Integer.numberOfLeadingZeros(n));
-		for (;;) {
-			if (cdepth < 0) {
-				aheapsort(v, t, pl, pr - pl + 1);
-			} else {
-				while (pr - pl > 15) {
-					int pm = pl + ((pr - pl) >> 1);
-					if (less(v[t[pm]], v[t[pl]])) swap(t, pm, pl);
-					if (less(v[t[pr]], v[t[pm]])) swap(t, pr, pm);
-					if (less(v[t[pm]], v[t[pl]])) swap(t, pm, pl);
-					double vp = v[t[pm]];
-					int pi = pl, pj = pr - 1;
-					swap(t, pm, pj);
-					for (;;) {
-						do { ++pi; } while (less(v[t[pi]], vp));
-						do { --pj; } while (less(vp, v[t[pj]]));
-						if (pi >= pj) break;
-						swap(t, pi, pj);
-					}
-					swap(t, pi, pr - 1);
-					if (pi - pl < pr - pi) {     // push the larger partition
-						stk[sp++] = pi + 1; stk[sp++] = pr;
-						pr = pi - 1;
-					} else {
-						stk[sp++] = pl; stk[sp++] = pi - 1;
-						pl = pi + 1;
-					}
-					stk[128 + dp++] = --cdepth;
+	static void argsortNumba(double[] v, int n, int[] t, int[] stk) {
+		for (int i = 0; i < n; i++) t[i] = i;
+		if (n < 2) return;
+		stk[0] = 0; stk[1] = n - 1;
+		int sp = 1;
+		while (sp > 0) {
+			sp--;
+			int low = stk[2 * sp], high = stk[2 * sp + 1];
+			while (high - low >= 15) {
+				int mid = (low + high) >> 1;
+				if (less(v[t[mid]], v[t[low]])) swap(t, low, mid);
+				if (less(v[t[high]], v[t[mid]])) swap(t, high, mid);
+				if (less(v[t[mid]], v[t[low]])) swap(t, low, mid);
+				double pivot = v[t[mid]];
+				swap(t, high, mid);
+				int i = low, j = high - 1;
+				while (true) {
+					while (i < high && less(v[t[i]], pivot)) i++;
+					while (j >= low && less(pivot, v[t[j]])) j--;
+					if (i >= j) break;
+					swap(t, i, j);
+					i++; j--;
 				}
-				for (int pi = pl + 1; pi <= pr; ++pi) {
-					int vi = t[pi];
-					double vp = v[vi];
-					int pj = pi;
-					while (pj > pl && less(vp, v[t[pj - 1]])) { t[pj] = t[pj - 1]; pj--; }
-					t[pj] = vi;
+				swap(t, i, high);
+				if (high - i > i - low) {     // the larger partition is pushed (when non-empty)
+					if (high > i) { stk[2 * sp] = i + 1; stk[2 * sp + 1] = high; sp++; }
+					high = i - 1;
+				} else {
+					if (i > low) { stk[2 * sp] = low; stk[2 * sp + 1] = i - 1; sp++; }
+					low = i + 1;
 				}
 			}
-			if (sp == 0) break;
-			pr = stk[--sp];
-			pl = stk[--sp];
-			cdepth = stk[128 + --dp];
-		}
-	}
-
-	/** numpy's aheapsort of t[off..off+n) (1-based heap indexing as numpy). */
-	private static void aheapsort(double[] v, int[] t, int off, int n) {
-		final int b = off - 1;
-		for (int l = n >> 1; l > 0; --l) {
-			int tmp = t[b + l], i = l, j = l << 1;
-			while (j <= n) {
-				if (j < n && less(v[t[b + j]], v[t[b + j + 1]])) j += 1;
-				if (less(v[tmp], v[t[b + j]])) { t[b + i] = t[b + j]; i = j; j += j; } else break;
+			if (high > low) {
+				for (int i = low + 1; i <= high; i++) {
+					int k = t[i];
+					double vk = v[k];
+					int j = i;
+					while (j > low && less(vk, v[t[j - 1]])) { t[j] = t[j - 1]; j--; }
+					t[j] = k;
+				}
 			}
-			t[b + i] = tmp;
-		}
-		while (n > 1) {
-			int tmp = t[b + n];
-			t[b + n] = t[b + 1];
-			n -= 1;
-			int i = 1, j = 2;
-			while (j <= n) {
-				if (j < n && less(v[t[b + j]], v[t[b + j + 1]])) j++;
-				if (less(v[tmp], v[t[b + j]])) { t[b + i] = t[b + j]; i = j; j += j; } else break;
-			}
-			t[b + i] = tmp;
 		}
 	}
 }
