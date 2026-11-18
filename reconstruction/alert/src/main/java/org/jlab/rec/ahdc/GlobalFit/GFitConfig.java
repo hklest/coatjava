@@ -51,6 +51,9 @@ public final class GFitConfig {
 	private double recTLo = -60.0, recTHi = 240.0, recTotMin = 0.0, recAdcMin = 0.0, recWfMax = 6.0, recKRes = 3.0;
 	private double recQ = 1.466250985505345;
 	private int recRounds = 2, recPoolW = 3;
+	/** hit sigma scale of recovery rows (Config.errscale, fit.py:85: sigma = errscale x kf_error) and the drop-worst retry of recover.Windows.drop_worst. */
+	private double errScale = 2.0;
+	private boolean recDropWorst = true;
 	private double recTStockLo = -60.0, recTStockHi = 240.0;
 	// search mode; FAST constants copied from search_measure.json (see the class javadoc)
 	private Search search = Search.FULL;
@@ -71,7 +74,7 @@ public final class GFitConfig {
 		c.zOn = zOn; c.d0On = d0On; c.prefit = prefit; c.atofOn = atofOn; c.atofFallback = atofFallback;
 		c.nFlip = nFlip; c.maxit = maxit; c.npass = npass; c.th0Mode = th0Mode; c.starts = starts;
 		c.recTLo = recTLo; c.recTHi = recTHi; c.recTotMin = recTotMin; c.recAdcMin = recAdcMin; c.recWfMax = recWfMax;
-		c.recKRes = recKRes; c.recQ = recQ; c.recRounds = recRounds; c.recPoolW = recPoolW;
+		c.recKRes = recKRes; c.errScale = errScale; c.recDropWorst = recDropWorst; c.recQ = recQ; c.recRounds = recRounds; c.recPoolW = recPoolW;
 		c.recTStockLo = recTStockLo; c.recTStockHi = recTStockHi;
 		c.search = search; c.fastRule = fastRule; c.c95 = c95; c.refitSeeded = refitSeeded;
 		return c;
@@ -126,6 +129,8 @@ public final class GFitConfig {
 	public double recWfMax() { return recWfMax; }
 	public double recKRes() { return recKRes; }
 	public double recQ() { return recQ; }
+	public double errScale() { return errScale; }
+	public boolean recDropWorst() { return recDropWorst; }
 	public int recRounds() { return recRounds; }
 	public int recPoolW() { return recPoolW; }
 	public double recTStockLo() { return recTStockLo; }

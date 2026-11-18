@@ -32,6 +32,17 @@ public final class GFitResult {
 		Arrays.fill(hitKind, 0); Arrays.fill(hitRow, 0); Arrays.fill(hitWire, 0);
 	}
 
+	/** all fields of src into this result (same capacity). */
+	public void copyFrom(GFitResult src) {
+		System.arraycopy(src.u, 0, u, 0, u.length); System.arraycopy(src.cov, 0, cov, 0, cov.length);
+		System.arraycopy(src.theta0, 0, theta0, 0, theta0.length);
+		cost = src.cost; dcost2 = src.dcost2;
+		status = src.status; flags = src.flags; niter = src.niter; nstart = src.nstart; nmin = src.nmin; startWon = src.startWon; nh = src.nh;
+		System.arraycopy(src.hitD, 0, hitD, 0, hitD.length); System.arraycopy(src.hitS, 0, hitS, 0, hitS.length);
+		System.arraycopy(src.hitL, 0, hitL, 0, hitL.length); System.arraycopy(src.hitKind, 0, hitKind, 0, hitKind.length);
+		System.arraycopy(src.hitRow, 0, hitRow, 0, hitRow.length); System.arraycopy(src.hitWire, 0, hitWire, 0, hitWire.length);
+	}
+
 	/** momentum [GeV]. */
 	public double p() { return Math.exp(u[2]); }
 

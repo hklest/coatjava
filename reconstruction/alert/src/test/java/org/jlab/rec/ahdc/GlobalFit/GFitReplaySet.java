@@ -36,6 +36,18 @@ public final class GFitReplaySet {
 		}, extras);
 	}
 
+	/** the stored baseline fit of track k (expected_before est_* rows) as a result: status, cost, internal state (ln p = -ln|q/p|), kinks, theta0. */
+	public GFitResult baselineResult(int k, int maxHits) {
+		GFitResult r = new GFitResult(maxHits);
+		double[] st = before.d("est_state"), kk = before.d("est_kinks"), th = before.d("est_theta0");
+		r.status = before.i("est_status")[k];
+		r.cost = before.d("est_cost")[k];
+		r.u[0] = st[k * 5]; r.u[1] = st[k * 5 + 1]; r.u[2] = -Math.log(Math.abs(st[k * 5 + 4])); r.u[3] = st[k * 5 + 2]; r.u[4] = st[k * 5 + 3];
+		for (int j = 0; j < 10; j++) r.u[5 + j] = kk[k * 10 + j];
+		for (int j = 0; j < 6; j++) r.theta0[j] = th[k * 6 + j];
+		return r;
+	}
+
 	private interface Src { Fx get(String name); }
 
 	private static GFitReplaySet build(Src src, boolean extras) {

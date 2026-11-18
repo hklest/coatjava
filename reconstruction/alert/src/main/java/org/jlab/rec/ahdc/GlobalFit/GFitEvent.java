@@ -34,6 +34,14 @@ public final class GFitEvent {
 	public int[] pEv, pG, pLi, pSrc, pAdc, pWf;
 	public double[] pTime, pDoca, pLet, pTot, pPed;
 
+	/**
+	 * raw AHDC::adc rows of the event, in row order (same length as {@link #eg}): layer index 0-7 in the order of
+	 * CellGeometry.layoff, wire index within the layer, leading edge [ns], ToT, ADC, waveform type, pedestal.
+	 * Input of RecoveryPool.fromRawRows; null when the event carries no raw rows.
+	 */
+	public int[] rLi, rWire, rAdc, rWf;
+	public double[] rLet, rTot, rPed;
+
 	public int nAtof() { return ax == null ? 0 : ax.length; }
 
 	public int nPool() { return pG == null ? 0 : pG.length; }

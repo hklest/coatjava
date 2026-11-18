@@ -100,8 +100,14 @@ public final class GFitWorkspace {
 	/** covariance scratch: matrix copy, eigenvectors, eigenvalues, inverse eigenvalues. */
 	final double[] eigA = new double[NPAR * NPAR], eigV = new double[NPAR * NPAR], eigW = new double[NPAR], eigIw = new double[NPAR];
 
+	// ---- HitRecovery ----
+
+	/** recovery scratch and the accepted rows of the last HitRecovery.recover call. */
+	public final HitRecovery.Scratch rec;
+
 	public GFitWorkspace(int maxHits) {
 		cap = maxHits + 8 + 40;
+		rec = new HitRecovery.Scratch(maxHits);
 		flipCand = new double[cap]; flipD0 = new double[cap]; flipJd0 = new double[cap * NPAR];
 		lg = new int[cap]; lli = new int[cap]; lw = new int[cap]; lism = new int[cap]; lcls = new int[cap]; lkind = new int[cap]; lrow = new int[cap];
 		lm = new double[cap]; lsig = new double[cap]; lh = new double[cap]; sarc = new double[cap];
