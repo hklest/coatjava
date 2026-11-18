@@ -17,6 +17,13 @@ public final class GFitResult {
 	public int nh;
 	public final double[] hitD, hitS, hitL;
 	public final int[] hitKind, hitRow, hitWire;
+	/**
+	 * outputs of the dE/dx step (P4 S3, set by {@link SwitchedFit} after the fit, never part of the fit): combined p and sigma_p, ln E,
+	 * dE/dx-alone ln p and its error, hits used, prompt wedge class. NaN / 0 / false after {@link #clear()} and when the switch is off.
+	 */
+	public double pDedx, sigPDedx, dedxLnE, dedxLnp, dedxSigLnp;
+	public int dedxN;
+	public boolean prompt;
 
 	public GFitResult(int maxHits) {
 		int n = maxHits + GFitConfig.NADD;
@@ -30,6 +37,7 @@ public final class GFitResult {
 		status = 0; flags = 0; niter = 0; nstart = 0; nmin = 0; startWon = 0; nh = 0;
 		Arrays.fill(hitD, 0.0); Arrays.fill(hitS, 0.0); Arrays.fill(hitL, 0.0);
 		Arrays.fill(hitKind, 0); Arrays.fill(hitRow, 0); Arrays.fill(hitWire, 0);
+		pDedx = Double.NaN; sigPDedx = Double.NaN; dedxLnE = Double.NaN; dedxLnp = Double.NaN; dedxSigLnp = Double.NaN; dedxN = 0; prompt = false;
 	}
 
 	/** all fields of src into this result (same capacity). */
@@ -41,6 +49,8 @@ public final class GFitResult {
 		System.arraycopy(src.hitD, 0, hitD, 0, hitD.length); System.arraycopy(src.hitS, 0, hitS, 0, hitS.length);
 		System.arraycopy(src.hitL, 0, hitL, 0, hitL.length); System.arraycopy(src.hitKind, 0, hitKind, 0, hitKind.length);
 		System.arraycopy(src.hitRow, 0, hitRow, 0, hitRow.length); System.arraycopy(src.hitWire, 0, hitWire, 0, hitWire.length);
+		pDedx = src.pDedx; sigPDedx = src.sigPDedx; dedxLnE = src.dedxLnE; dedxLnp = src.dedxLnp; dedxSigLnp = src.dedxSigLnp;
+		dedxN = src.dedxN; prompt = src.prompt;
 	}
 
 	/** momentum [GeV]. */

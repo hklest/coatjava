@@ -21,7 +21,7 @@ public final class GlobalTrackFitter {
 	private final GFitConfig cfg;
 	private final LevMar lm;
 	private final double bzHelix, beamX, beamY, sigZ, tolCost;
-	private final boolean zOn, prefit, atofOn, timeOn;
+	private final boolean zOn, prefit, atofOn, timeOn, dedxOn;
 	private final int maxit, npass;
 	private final double b0Pscale;
 
@@ -33,9 +33,14 @@ public final class GlobalTrackFitter {
 		this.cfg = cfg;
 		this.lm = new LevMar(cost, cfg);
 		bzHelix = cfg.bzHelix(); beamX = cfg.beamX(); beamY = cfg.beamY(); sigZ = cfg.sigZ(); tolCost = cfg.tolCost();
-		zOn = cfg.zOn(); prefit = cfg.prefit(); atofOn = cfg.atofOn(); timeOn = cfg.timeOn();
+		zOn = cfg.zOn(); prefit = cfg.prefit(); atofOn = cfg.atofOn(); timeOn = cfg.timeOn(); dedxOn = cfg.dedxOn();
 		maxit = cfg.maxit(); npass = cfg.npass(); b0Pscale = cfg.b0Pscale();
 	}
+
+	/** the time and dE/dx switches of the configuration (read by {@link SwitchedFit}; the fit itself only reads the table it is given). */
+	public boolean timeOn() { return timeOn; }
+
+	public boolean dedxOn() { return dedxOn; }
 
 	/**
 	 * Fits one track into out (cleared first). tab is the ATOF position table of the event's half, bankTimes selects the bank

@@ -105,6 +105,11 @@ public final class GFitWorkspace {
 	/** recovery scratch and the accepted rows of the last HitRecovery.recover call. */
 	public final HitRecovery.Scratch rec;
 
+	// ---- SwitchedFit ----
+
+	/** dE/dx scratch of this thread, created by {@link SwitchedFit} on its first track with the dE/dx switch on (null otherwise). */
+	public SwitchedFit.Scratch sw;
+
 	public GFitWorkspace(int maxHits) {
 		cap = maxHits + 8 + 40;
 		rec = new HitRecovery.Scratch(maxHits);

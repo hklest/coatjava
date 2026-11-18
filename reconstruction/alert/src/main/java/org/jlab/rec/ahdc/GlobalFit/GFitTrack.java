@@ -12,6 +12,8 @@ public final class GFitTrack {
 	public final int[] hism, hcls, hrow;
 	/** seed of the B0 track: phi [rad], p [GeV], theta [rad], z [mm]. */
 	public final double seedPhi, seedP, seedTheta, seedZ;
+	/** per hit AHDC::adc ADC and pedestal (index like hg), set by the caller only when the dE/dx switch is on; null otherwise. The doca is {@link #hm}. */
+	public double[] hAdc, hPed;
 
 	public GFitTrack(int trackid, int[] hg, double[] hm, double[] hsig, double[] hh, int[] hism, int[] hcls, int[] hrow,
 			double seedPhi, double seedP, double seedTheta, double seedZ) {

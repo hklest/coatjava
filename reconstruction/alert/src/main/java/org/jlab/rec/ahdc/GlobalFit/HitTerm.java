@@ -91,7 +91,8 @@ public final class HitTerm {
 	 * signed closest approach of the stepped trajectory (node table a, flat [i * NC + c], nn nodes) to wire g (ends wo/we, flat
 	 * n x 3): fit._pca1. res4 = (signed d, PCA x, y, z), all NaN with flag 1 when no node pair has positive length; returns
 	 * the flag (1 no root, 2 PCA outside the wire). gs and ds are scratch of length >= nn; res4 must have length >= 10
-	 * (slots 4..9 are scratch of the Hermite evaluation).
+	 * (slots 4..9 are scratch of the Hermite evaluation). With res4.length > 10 slot 10 receives the arc length s of the PCA
+	 * (prop._pca1 return value s = a[i0].s + tau (a[i0+1].s - a[i0].s), prop.py:838; NaN with flag 1 and no valid segment).
 	 */
 	public static int pca1(double[] a, int nn, double[] wo, double[] we, int g, double[] gs, double[] ds, double[] res4) {
 		int b = 3 * g;
@@ -132,6 +133,7 @@ public final class HitTerm {
 			}
 			if (!(a[(i0 + 1) * NC] - a[i0 * NC] > 1e-12)) {
 				res4[0] = res4[1] = res4[2] = res4[3] = Double.NaN;
+				if (res4.length > 10) res4[10] = Double.NaN;
 				return 1;
 			}
 		} else {
@@ -163,6 +165,7 @@ public final class HitTerm {
 		double nx = vy * wz - vz * wy, ny = vz * wx - vx * wz, nz = vx * wy - vy * wx;
 		double sign = (Math.sqrt(nx * nx + ny * ny + nz * nz) > 1e-9 * nv && (dx * nx + dy * ny + dz * nz) < 0.0) ? -1.0 : 1.0;
 		if (dw < -1e-6 || dw > l0 + 1e-6) flag |= 2;
+		if (res4.length > 10) res4[10] = a[i0 * NC] + tau * (a[(i0 + 1) * NC] - a[i0 * NC]);
 		res4[0] = sign * dist;
 		res4[1] = rx;
 		res4[2] = ry;
