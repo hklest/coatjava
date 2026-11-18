@@ -187,4 +187,18 @@ public class GFitFullSearchTest {
 		fitOne(ft, new GFitWorkspace(maxHits), t, e, b);
 		assertEquals(null, diff(a, b));
 	}
+
+	/** the grid order of equal costs is numpy's default argsort (a plateau of exactly equal sums occurs when every hit saturates the dbox). */
+	@Test
+	public void argsortNumpyTieOrder() {
+		int n = 60;
+		double[] v = new double[n];
+		int[] t = new int[n];
+		for (int i = 0; i < n; i++) { v[i] = (i * 7 + i / 5) % 4; t[i] = i; }
+		GlobalTrackFitter.argsortNumpy(v, n, t, new int[192]);
+		// np.argsort of the same vector (numpy 1.23.5)
+		int[] expect = {0, 55, 54, 50, 49, 45, 44, 40, 39, 35, 34, 30, 25, 24, 20, 19, 29, 59, 15, 14, 4, 5, 9, 10, 53, 3, 48, 43, 8, 33, 38, 13, 58,
+			28, 18, 23, 57, 2, 52, 22, 47, 12, 17, 32, 7, 27, 37, 42, 41, 56, 1, 36, 51, 16, 26, 46, 11, 6, 21, 31};
+		assertEquals(Arrays.toString(expect), Arrays.toString(t));
+	}
 }
