@@ -344,7 +344,9 @@ public final class AtofTerm {
 	 * node's phi for a layer the seed does not reach), the ATOF_NONE flag, the bar z recalibration z_cal = (z - offset) /
 	 * scale (recalOffset/recalScale: 60 values of the track's half, null = none) and, when par[P_TASSOC] is on, the frozen
 	 * wedge weight 2 t_win pdf_t(t_c - t_pred(seed) - off) (1 for bar rows, an unreached seed layer or a non-finite time);
-	 * otherwise ct is the time - start. bankTimes selects the bank times instead of the final ones.
+	 * otherwise ct is the time - start. bankTimes selects the bank times instead of the final ones. With par[P_TON] (the time
+	 * table, {@link AtofPositionTable#withTime}) the times are {@code ev.aTime} (corrected wedge time, bank time for bars, as
+	 * atof.attach reads t_ge8uw / t_ge10x) and bankTimes is ignored; a NaN start time gives a NaN ct.
 	 */
 	public static void attach(GFitTrack t, GFitEvent ev, double[] par, double[] recalOffset, double[] recalScale,
 			boolean bankTimes, Propagator prop, GFitWorkspace ws, TrackState st) {
@@ -359,7 +361,7 @@ public final class AtofTerm {
 			pl = Math.atan2(ws.out[(nn - 1) * NC + 2], ws.out[(nn - 1) * NC + 1]);
 		}
 		final int na = ev.nAtof();
-		final double[] times = bankTimes ? ev.tBank : ev.tFinal;
+		final double[] times = par[P_TON] > 0.5 ? ev.aTime : (bankTimes ? ev.tBank : ev.tFinal);
 		final double bwin = WIN_ROWS * ROW, wwin = WIN_ROWS * ROW;
 		final double c0bar = (((int) rec[7]) & 1) != 0 ? rec[0] : pl;
 		final double c0wed = (((int) rec[15]) & 1) != 0 ? rec[8] : pl;
@@ -395,6 +397,12 @@ public final class AtofTerm {
 		}
 		st.ncand = n;
 		st.fnone = none;
+	}
+
+	/** true when a wedge candidate of st has a finite time - start (flag 256 of the time fit). */
+	static boolean anyWedgeTime(TrackState st) {
+		for (int c = 0; c < st.ncand; c++) if (st.cbar[c] == 0 && Double.isFinite(st.ct[c])) return true;
+		return false;
 	}
 
 	private static double pdfTime(double r, double[] par, TrackState st) {

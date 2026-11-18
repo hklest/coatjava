@@ -21,7 +21,7 @@ public final class GlobalTrackFitter {
 	private final GFitConfig cfg;
 	private final LevMar lm;
 	private final double bzHelix, beamX, beamY, sigZ, tolCost;
-	private final boolean zOn, prefit, atofOn;
+	private final boolean zOn, prefit, atofOn, timeOn;
 	private final int maxit, npass;
 	private final double b0Pscale;
 
@@ -33,7 +33,7 @@ public final class GlobalTrackFitter {
 		this.cfg = cfg;
 		this.lm = new LevMar(cost, cfg);
 		bzHelix = cfg.bzHelix(); beamX = cfg.beamX(); beamY = cfg.beamY(); sigZ = cfg.sigZ(); tolCost = cfg.tolCost();
-		zOn = cfg.zOn(); prefit = cfg.prefit(); atofOn = cfg.atofOn();
+		zOn = cfg.zOn(); prefit = cfg.prefit(); atofOn = cfg.atofOn(); timeOn = cfg.timeOn();
 		maxit = cfg.maxit(); npass = cfg.npass(); b0Pscale = cfg.b0Pscale();
 	}
 
@@ -274,6 +274,7 @@ public final class GlobalTrackFitter {
 		double p = Math.exp(u[2]), thd = u[4] * 180 / Math.PI;
 		if (p < 0.12 || p > 1.0 || thd < 30 || thd > 150) flags |= 2;
 		if (atofOn && ws.atof.fnone == 1) flags |= 32;      // ATOF_NONE
+		if (timeOn && atofOn && ws.atof.par[AtofTerm.P_TON] > 0.5 && AtofTerm.anyWedgeTime(ws.atof)) flags |= 256;      // time term live (no Python counterpart)
 		int st = conv ? 0 : 1;
 		boolean usedBad = false;
 		for (int k = 0; k < nh; k++) if (ws.lkind[k] != 2 && (ws.PF[k] & 1) == 1) usedBad = true;

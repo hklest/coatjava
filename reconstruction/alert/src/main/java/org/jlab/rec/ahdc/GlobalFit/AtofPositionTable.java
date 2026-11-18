@@ -61,6 +61,19 @@ public final class AtofPositionTable {
 		return new AtofPositionTable(p, r[0], r[1]);
 	}
 
+	/**
+	 * The ge10_t configuration of this table (comb_time.py ge10_t: time on, tassoc off): a copy with P_TON 1, P_TASSOC 0 and the
+	 * eight time keys {@code off s1 s2 f2 mlate slate flate fbg} of {@code keys} in P_TOFF..P_TFB. Built once per run and half
+	 * by the caller, never per track; the fit then reads the wedge time from {@link GFitEvent#aTime} (see {@link AtofTerm#attach}).
+	 */
+	public AtofPositionTable withTime(SwitchConstants.TimeKeys keys) {
+		double[] p = par.clone(), k = keys.values();
+		for (int i = 0; i < TIME.length; i++) p[P_TOFF + i] = k[i];
+		p[P_TON] = 1.0;
+		p[P_TASSOC] = 0.0;
+		return new AtofPositionTable(p, offset, scale);
+	}
+
 	/** {offset, scale} = bz_recal[0, :, 0], bz_recal[1, :, 0] of a flat 2 x 60 x 2 array. */
 	public static double[][] recalFromBzRecal(double[] bzRecal) {
 		double[] o = new double[NBAR], s = new double[NBAR];
