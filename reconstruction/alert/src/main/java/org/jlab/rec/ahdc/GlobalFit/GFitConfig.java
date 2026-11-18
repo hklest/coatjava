@@ -5,7 +5,9 @@ package org.jlab.rec.ahdc.GlobalFit;
  * ge5_vz_zt variant uses (propagator model, dbox hit term, ATOF term on, fallback off), their packing into the numba
  * arrays {@code _cfarr}/{@code _ciarr} (fit.py:1038-1054, values in fixture unit/config.txt), the grid constants and
  * finite-difference steps of fit.py, the recovery windows of the ge9 freeze file, and the search mode of plan D5.
- * {@link #pythonDefault()} is the Python configuration; the {@code with*} methods return modified copies.
+ * {@link #pythonDefault()} is the Python configuration; the {@code with*} methods return modified copies. The FAST constants
+ * (rule 6, c95) are those of /lcrc/project/jlab/klest/alert_lcrc/out/gfj/ref/search/search_measure.json, md5
+ * f561f06ae8d16231d959e40a0d1cfc42.
  */
 public final class GFitConfig {
 
@@ -50,11 +52,14 @@ public final class GFitConfig {
 	private double recQ = 1.466250985505345;
 	private int recRounds = 2, recPoolW = 3;
 	private double recTStockLo = -60.0, recTStockHi = 240.0;
-	// search mode; FAST constants are placeholders until S5 (search_measure.json)
+	// search mode; FAST constants copied from search_measure.json (md5 f561f06ae8d16231d959e40a0d1cfc42, see the class javadoc)
 	private Search search = Search.FULL;
-	private int fastRule = -1;            // S5 placeholder
-	private double c95 = Double.NaN;      // S5 placeholder
-	private boolean refitSeeded = false;  // S5 placeholder
+	/** D3 ladder rule chosen by measurement: 6 = the full search for every track (no seeded rule passed gate P on both runs). */
+	private int fastRule = 6;
+	/** 95th percentile of cost per hit of the full search on 23014 (status 0), the threshold of rules 2, 3 and 5. */
+	private double c95 = 0.351160986443719;
+	/** recovery refits start from the baseline state (D4): left false here, decided in S6 from the D4 record of the same file. */
+	private boolean refitSeeded = false;
 
 	private GFitConfig() {}
 
@@ -76,6 +81,9 @@ public final class GFitConfig {
 	public static GFitConfig pythonDefault() { return new GFitConfig(); }
 
 	public GFitConfig withSearch(Search s) { GFitConfig c = copy(); c.search = s; return c; }
+
+	/** ladder rule 1-6 of plan D3 used by the FAST search (tests exercise the other rules). */
+	public GFitConfig withFastRule(int rule) { GFitConfig c = copy(); c.fastRule = rule; return c; }
 
 	public GFitConfig withNFlip(int n) { GFitConfig c = copy(); c.nFlip = n; return c; }
 

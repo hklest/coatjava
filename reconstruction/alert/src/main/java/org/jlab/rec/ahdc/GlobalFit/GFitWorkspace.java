@@ -75,8 +75,34 @@ public final class GFitWorkspace {
 	final double[] box3 = new double[3], cell4 = new double[4], o9 = new double[9], o9b = new double[9], jx5 = new double[5],
 		j53 = new double[15], sArc1 = new double[1];
 
+	// ---- LevMar and GlobalTrackFitter ----
+
+	/** number of grid points of the start search (8 x 13 x 5) and of the best starts kept. */
+	static final int NGRID = 8 * 13 * 5, NBEST = 3;
+	/** LM outputs of the last LevMar.run: converged flag and iterations. */
+	public boolean lmConv;
+	public int lmIt;
+	/** LM scratch: gradient, matrix, damped matrix, step, trial and probe states, pivots. */
+	final double[] lmGs = new double[NPAR], lmHs = new double[NPAR * NPAR], lmA = new double[NPAR * NPAR], lmDx = new double[NPAR],
+		lmUn = new double[NPAR], lmUu = new double[NPAR];
+	final int[] piv = new int[NPAR];
+	/** grid scratch: costs, states (5 each), sort order and merge buffer, best starts. */
+	final double[] gridF = new double[NGRID], gridU = new double[NGRID * 5], gridY = new double[NPAR], bestU = new double[NBEST * 5],
+		bestF = new double[NBEST];
+	final int[] gridOrd = new int[NGRID], gridTmp = new int[NGRID];
+	/** starts (6 x NPAR, kind), minima found (8 x NPAR, cost, converged, kind), frozen theta0 and working states. */
+	final double[] starts = new double[6 * NPAR], minU = new double[8 * NPAR], minF = new double[8], u = new double[NPAR],
+		u2 = new double[NPAR], th0f = new double[NPL];
+	final int[] startKind = new int[6], minK = new int[8];
+	final boolean[] minC = new boolean[8];
+	/** flip scratch: candidate |D|, D and JD at the minimum, clipped matrix, JD row, solve vector. */
+	final double[] flipCand, flipD0, flipJd0, flipHs = new double[NPAR * NPAR], flipJd = new double[NPAR], flipW = new double[NPAR];
+	/** covariance scratch: matrix copy, eigenvectors, eigenvalues, inverse eigenvalues. */
+	final double[] eigA = new double[NPAR * NPAR], eigV = new double[NPAR * NPAR], eigW = new double[NPAR], eigIw = new double[NPAR];
+
 	public GFitWorkspace(int maxHits) {
 		cap = maxHits + 8 + 40;
+		flipCand = new double[cap]; flipD0 = new double[cap]; flipJd0 = new double[cap * NPAR];
 		lg = new int[cap]; lli = new int[cap]; lw = new int[cap]; lism = new int[cap]; lcls = new int[cap]; lkind = new int[cap]; lrow = new int[cap];
 		lm = new double[cap]; lsig = new double[cap]; lh = new double[cap]; sarc = new double[cap];
 		D = new double[cap]; S = new double[cap]; JD = new double[cap * NPAR]; JS = new double[cap * NPAR];
