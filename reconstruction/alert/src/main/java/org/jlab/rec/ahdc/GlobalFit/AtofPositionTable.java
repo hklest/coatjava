@@ -1,5 +1,7 @@
 package org.jlab.rec.ahdc.GlobalFit;
 
+import static org.jlab.rec.ahdc.GlobalFit.AtofTerm.*;
+
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -11,11 +13,8 @@ import java.util.function.ToDoubleFunction;
  */
 public final class AtofPositionTable {
 
-	public static final int NP = 34, NBAR = 60;
-	public static final int P_WZLEN = 0, P_WZSIG = 1, P_WZOFF = 2, P_ROWW = 3, P_WPSIG = 4, P_WPOFF = 5, P_BZOFF = 6, P_BZS1 = 7,
-		P_BZS2 = 8, P_BZF2 = 9, P_BPSIG = 10, P_BPOFF = 11, P_ETAW = 12, P_ETAB = 13, P_RHOW = 14, P_RHOB = 15, P_TOFF = 16,
-		P_TS1 = 17, P_TS2 = 18, P_TF2 = 19, P_TML = 20, P_TSL = 21, P_TFL = 22, P_TFB = 23, P_TWIN = 24, P_TON = 25,
-		P_TMODE = 26, P_BARON = 27, P_FORCEW = 28, P_CEIL = 29, P_ZMID = 30, P_TASSOC = 31, P_TRA = 32, P_TRB = 33;
+	/** parameter count and P_* indices are those of {@link AtofTerm}. */
+	public static final int NP = AtofTerm.NP, NBAR = 60;
 
 	private static final String[] SPATIAL = {"wz_len", "wz_sig", "wz_off", "row_w", "wphi_sig", "wphi_off", "bz_off", "bz_sig1",
 		"bz_sig2", "bz_f2", "bphi_sig", "bphi_off", "eta_w", "eta_b", "rho_w", "rho_b"};

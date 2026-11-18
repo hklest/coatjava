@@ -1,7 +1,5 @@
 package org.jlab.rec.ahdc.GlobalFit;
 
-import org.apache.commons.math3.special.Erf;
-
 /**
  * Hit likelihood pieces of the pinned fit: the box-times-Cauchy cost of one drift-distance hit (fit._dbox, fit.py:195-226,
  * l = -c/2 as in fit._hit_l kinds 0 and 1, fit.py:229-246) and the signed closest approach of a propagated node table to a
@@ -24,9 +22,9 @@ public final class HitTerm {
 		if (!legacy && doca < 0.0) doca = 0.0;
 		boolean fin = !(Double.isNaN(d) || Double.isInfinite(d));
 		if (!fin) d = 3.0 * h;
-		double z0 = 0.5 * Erf.erfc(-(h / e) / SQ2) - 0.5 * Erf.erfc((h / e) / SQ2);
+		double z0 = 0.5 * GFitMath.erfc(-(h / e) / SQ2) - 0.5 * GFitMath.erfc((h / e) / SQ2);
 		double u1 = (h - d) / e, u2 = (-h - d) / e;
-		double pb = (0.5 * Erf.erfc(-u1 / SQ2) - 0.5 * Erf.erfc(-u2 / SQ2)) / z0;
+		double pb = (0.5 * GFitMath.erfc(-u1 / SQ2) - 0.5 * GFitMath.erfc(-u2 / SQ2)) / z0;
 		double q = pb * (1.0 - eps) + eps;
 		double cc = -2.0 * Math.log(q);
 		double a, a1, a2;

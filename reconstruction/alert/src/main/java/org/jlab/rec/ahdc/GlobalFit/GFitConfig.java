@@ -4,14 +4,14 @@ package org.jlab.rec.ahdc.GlobalFit;
  * Immutable configuration of the global track fit: the fields of the pinned Python {@code Config} (fit.py:53-97) that the
  * ge5_vz_zt variant uses (propagator model, dbox hit term, ATOF term on, fallback off), their packing into the numba
  * arrays {@code _cfarr}/{@code _ciarr} (fit.py:1038-1054, values in fixture unit/config.txt), the grid constants and
- * finite-difference steps of fit.py, the recovery windows of the ge9 freeze file, and the search mode of plan D5.
+ * finite-difference steps of fit.py, the recovery windows of the ge9 freeze file, and the search mode.
  * {@link #pythonDefault()} is the Python configuration; the {@code with*} methods return modified copies. The FAST constants
- * (rule 6, c95) are those of /lcrc/project/jlab/klest/alert_lcrc/out/gfj/ref/search/search_measure.json, md5
- * f561f06ae8d16231d959e40a0d1cfc42.
+ * (rule 6, c95) are those of search_measure.json of the P3 search measurement (md5
+ * 6dd26bbd8cde71c5e6ffe1314cccc51a).
  */
 public final class GFitConfig {
 
-	/** Start search: FULL = the Python sequence, FAST = the seeded fit of plan D5 with fallback to FULL. */
+	/** Start search: FULL = the Python sequence, FAST = the seeded fit with fallback to FULL. */
 	public enum Search { FULL, FAST }
 
 	/** Starting points: seed only (ci[12] = 2, Python "b0") or grid plus seed (ci[12] = 3, "grid+b0"). */
@@ -52,13 +52,13 @@ public final class GFitConfig {
 	private double recQ = 1.466250985505345;
 	private int recRounds = 2, recPoolW = 3;
 	private double recTStockLo = -60.0, recTStockHi = 240.0;
-	// search mode; FAST constants copied from search_measure.json (md5 f561f06ae8d16231d959e40a0d1cfc42, see the class javadoc)
+	// search mode; FAST constants copied from search_measure.json (see the class javadoc)
 	private Search search = Search.FULL;
-	/** D3 ladder rule chosen by measurement: 6 = the full search for every track (no seeded rule passed gate P on both runs). */
+	/** Ladder rule of the FAST search, chosen by measurement: 6 = the full search for every track (no seeded rule passed gate P on both runs). */
 	private int fastRule = 6;
 	/** 95th percentile of cost per hit of the full search on 23014 (status 0), the threshold of rules 2, 3 and 5. */
 	private double c95 = 0.351160986443719;
-	/** recovery refits start from the baseline state (D4): left false here, decided in S6 from the D4 record of the same file. */
+	/** recovery refits start from the baseline state; false, as the measurement recorded in search_measure.json. */
 	private boolean refitSeeded = false;
 
 	private GFitConfig() {}
@@ -82,7 +82,7 @@ public final class GFitConfig {
 
 	public GFitConfig withSearch(Search s) { GFitConfig c = copy(); c.search = s; return c; }
 
-	/** ladder rule 1-6 of plan D3 used by the FAST search (tests exercise the other rules). */
+	/** ladder rule 1-6 used by the FAST search (tests exercise the other rules). */
 	public GFitConfig withFastRule(int rule) { GFitConfig c = copy(); c.fastRule = rule; return c; }
 
 	public GFitConfig withNFlip(int n) { GFitConfig c = copy(); c.nFlip = n; return c; }

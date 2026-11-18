@@ -78,7 +78,6 @@ public class GFitFullSearchTest {
 		return true;
 	}
 
-	private static double relDev(double a, double e) { return Math.abs(a - e) / Math.max(1.0, Math.abs(e)); }
 
 	/**
 	 * Parent D5 tiers 1-3 of results r against the stored Python fit of the set; prints worst deviations and the ids (trackid, row)
@@ -107,7 +106,7 @@ public class GFitFullSearchTest {
 			if (t2) {
 				n2++;
 				boolean ok = j.status == 0;
-				double dc = relDev(j.cost, cost[k]);
+				double dc = Math.abs(j.cost - cost[k]);
 				wCost = Math.max(wCost, dc);
 				ok &= dc <= 1e-3;
 				double[] x = {j.u[0], j.u[1], j.u[3], j.u[4], 1.0 / j.p()};

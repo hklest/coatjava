@@ -1,7 +1,5 @@
 package org.jlab.rec.ahdc.GlobalFit;
 
-import org.apache.commons.math3.special.Erf;
-
 /**
  * ATOF position term of the global fit: per-track candidate attach from the event's ATOF rows and the B0 seed (port of
  * atof.seed_intercepts, atof.attach and the frozen wedge association weight, atof.py:102-123, 387-450), the likelihood
@@ -17,7 +15,6 @@ public final class AtofTerm {
 	static final double BAR_HALF = 139.85, WEDGE_HALF = 5 * 27.7, ZACC = 5.0, SRCH = 2.0;
 	static final double ROW = Math.toRadians(6.0), WIN_ROWS = 3.0, NONE_ROWS = 1.5;
 	private static final double SQ2 = Math.sqrt(2.0), ISQ2PI = 1.0 / Math.sqrt(2.0 * Math.PI), TWOPI = 2.0 * Math.PI;
-	private static final double CEIL_STH = Math.toRadians(0.05), CEIL_SZ = 0.5;
 	private static final int NPAR = GFitWorkspace.NPAR;
 	private static final int NC = GFitWorkspace.NC;
 
@@ -27,6 +24,7 @@ public final class AtofTerm {
 		P_TS1 = 17, P_TS2 = 18, P_TF2 = 19, P_TML = 20, P_TSL = 21, P_TFL = 22, P_TFB = 23, P_TWIN = 24, P_TON = 25, P_TMODE = 26,
 		P_BARON = 27, P_FORCEW = 28, P_CEIL = 29, P_ZMID = 30, P_TASSOC = 31, P_TRA = 32, P_TRB = 33;
 	public static final int NP = 34;
+	// slot P_CEIL is unused here (keeps the 34-slot layout)
 
 	private AtofTerm() {}
 
@@ -74,7 +72,7 @@ public final class AtofTerm {
 	/** box(ell) convolved with N(0, sig) at d: value and first, second derivative in d (atof._boxg). */
 	static void boxg(double d, double ell, double sig, double[] o) {
 		double a = (d + 0.5 * ell) / sig, b = (d - 0.5 * ell) / sig;
-		o[0] = (0.5 * Erf.erfc(-a / SQ2) - 0.5 * Erf.erfc(-b / SQ2)) / ell;
+		o[0] = (0.5 * GFitMath.erfc(-a / SQ2) - 0.5 * GFitMath.erfc(-b / SQ2)) / ell;
 		double pa = Math.exp(-0.5 * a * a) * ISQ2PI, pb = Math.exp(-0.5 * b * b) * ISQ2PI;
 		o[1] = (pa - pb) / (sig * ell);
 		o[2] = (-a * pa + b * pb) / (sig * sig * ell);
@@ -287,18 +285,6 @@ public final class AtofTerm {
 								he[j * NPAR + m] += J[a * NPAR + j] * Cxx[a * 4 + c] * J[c * NPAR + m];
 							}
 						}
-					}
-				}
-			}
-		}
-		if (par[P_CEIL] > 0.5) {  // CEILING diagnostic: theta and z0 pinned to the target carried by the cbar == 2 pseudo-candidate
-			for (int c = 0; c < st.ncand; c++) {
-				if (st.cbar[c] == 2) {
-					double r1 = (u[4] - st.cz[c]) / CEIL_STH, r2 = (u[3] - st.cphi[c]) / CEIL_SZ;
-					fv += r1 * r1 + r2 * r2;
-					if (want) {
-						g[4] += 2.0 * r1 / CEIL_STH; hc[4 * NPAR + 4] += 2.0 / (CEIL_STH * CEIL_STH); he[4 * NPAR + 4] += 2.0 / (CEIL_STH * CEIL_STH);
-						g[3] += 2.0 * r2 / CEIL_SZ; hc[3 * NPAR + 3] += 2.0 / (CEIL_SZ * CEIL_SZ); he[3 * NPAR + 3] += 2.0 / (CEIL_SZ * CEIL_SZ);
 					}
 				}
 			}
