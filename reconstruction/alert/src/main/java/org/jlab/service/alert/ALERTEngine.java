@@ -238,7 +238,7 @@ public class ALERTEngine extends ReconstructionEngine {
         Map<String, Integer> tableMap = new HashMap<>();
         tableMap.put("/calibration/alert/ahdc/gains", 3);
         if (gfitOn) {
-            gfit = new GFitEngineAdapter(gfitSearch, gfitRecovery);
+            gfit = new GFitEngineAdapter(gfitSearch, gfitRecovery, gfitTime, gfitDedx);
             tableMap.putAll(gfit.requiredTables());
         }
         requireConstants(tableMap);

@@ -249,4 +249,97 @@ public class GFitEngineAdapterTest {
         assertTrue(Double.isFinite(without[0].p) && Double.isFinite(without[0].z0) && Double.isFinite(without[0].cov[0]));
         assertTrue(Arrays.toString(new double[] {with[0].p, without[0].p}), with[0].p > 100 && with[0].p < 1000);
     }
+
+    /** Fits with the given switches and the fixture constants of run 23014 (time tables per half, dE/dx class_var_all). */
+    private static GFitEngineAdapter.Fits switchedFits(boolean time, boolean dedx) {
+        GFitFixtures.Fx f = GFitFixtures.resource("unit/field.txt.gz");
+        double[] fp = f.d("field_par");
+        FieldGrid field = FieldGrid.fromArrays(fp[0], fp[1], fp[2], fp[3], f.shape("br")[0], f.shape("br")[1], f.d("br"), f.d("bz"));
+        GFitFixtureConstants fc = new GFitFixtureConstants(true);
+        org.jlab.rec.ahdc.GlobalFit.AtofPositionTable[] tab = {fc.atofPosition(23014, 0), fc.atofPosition(23014, 1)};
+        org.jlab.rec.ahdc.GlobalFit.AtofPositionTable[] tt = time
+            ? new org.jlab.rec.ahdc.GlobalFit.AtofPositionTable[] {tab[0].withTime(fc.timeKeys(23014, 0)), tab[1].withTime(fc.timeKeys(23014, 1))}
+            : null;
+        GFitConfig cfg = GFitEngineAdapter.config(GFitConfig.Search.FAST, time, dedx);
+        return new GFitEngineAdapter.Fits(cfg, new double[] {-1.05, 0.0}, field, geometry(), tab, tt, dedx ? fc.dedx(23014) : null, true);
+    }
+
+    /** t60 tracks as the engine would hand them over with the switches on: raw AHDC::adc ADC and ped per event row, fixture ATOF times. */
+    private static GFitReplaySet switchSet() {
+        GFitReplaySet set = GFitReplaySet.resource("t60");
+        GFitFixtures.Fx hx = GFitFixtures.resource("switch/t60/hits_extra.txt.gz"), ax = GFitFixtures.resource("switch/t60/atof_extra.txt.gz");
+        int[] hoff = set.tracksFx.i("hoff"), hadc = set.tracksFx.i("h_adc"), aoff = set.atofFx.i("aoff");
+        double[] hped = hx.d("h_ped"), aE = ax.d("a_energy"), aT = ax.d("a_t_ge10");
+        for (int k = 0; k < set.n; k++) {
+            GFitEvent ev = set.events[k];
+            GFitTrack t = set.tracks[k];
+            int nrow = ev.eg.length;
+            ev.rAdc = new int[nrow];
+            ev.rPed = new double[nrow];
+            for (int i = 0; i < t.nHits(); i++) {
+                ev.rAdc[t.hrow[i]] = hadc[hoff[k] + i];
+                ev.rPed[t.hrow[i]] = hped[hoff[k] + i];
+            }
+            ev.aEnergy = Arrays.copyOfRange(aE, aoff[k], aoff[k + 1]);
+            ev.aTime = Arrays.copyOfRange(aT, aoff[k], aoff[k + 1]);
+        }
+        return set;
+    }
+
+    @Test
+    public void switchInputs() {
+        assertEquals(1, GFitEngineAdapter.half(23015));
+        assertEquals(0, GFitEngineAdapter.half(-4));
+        GFitReplaySet set = switchSet();
+        int[] hoff = set.tracksFx.i("hoff"), hadc = set.tracksFx.i("h_adc");
+        double[] hped = GFitFixtures.resource("switch/t60/hits_extra.txt.gz").d("h_ped");
+        GFitEngineAdapter.Fits f = switchedFits(true, true);
+        GFitEngineAdapter.Scratch s = new GFitEngineAdapter.Scratch();
+        int n256 = 0, nfin = 0, n512 = 0;
+        for (int k = 0; k < 20; k++) {
+            GFitTrack t = set.tracks[k];
+            GFitEngineAdapter.dedxInputs(t, set.events[k]);
+            for (int i = 0; i < t.nHits(); i++) {
+                assertEquals(hadc[hoff[k] + i], t.hAdc[i], 0);
+                assertEquals(hped[hoff[k] + i], t.hPed[i], 0);
+            }
+            GFitEngineAdapter.Row[] row = new GFitEngineAdapter.Row[1];
+            GFitEngineAdapter.fitTracks(f, new GFitTrack[] {t}, new int[] {0}, set.events[k], true, s, row);
+            if ((row[0].flags & 256) != 0) n256++;
+            if ((row[0].flags & 512) != 0) n512++;
+            if (Double.isFinite(row[0].pDedx)) {
+                nfin++;
+                assertTrue("p_dedx in MeV " + row[0].pDedx, row[0].pDedx > 50 && row[0].pDedx < 2000);
+                assertTrue(Double.isFinite(row[0].sigPDedx) && row[0].sigPDedx > 0);
+            }
+        }
+        System.out.println("adapter switches on (20 t60 tracks): flag 256 on " + n256 + ", finite p_dedx " + nfin + ", flag 512 " + n512);
+        assertTrue(n256 >= 15);
+        assertTrue(nfin >= 15);
+    }
+
+    @Test
+    public void switchesOffBank() {
+        GFitReplaySet set = switchSet();
+        GFitEngineAdapter.Fits off = fits(new double[] {-1.05, 0.0});
+        GFitEngineAdapter.Fits offTables = switchedFits(false, false);
+        assertTrue(off.sw == null && offTables.sw == null);
+        GFitEngineAdapter.Scratch s = new GFitEngineAdapter.Scratch();
+        for (int k = 0; k < 10; k++) {
+            GFitTrack t = set.tracks[k];
+            GFitEngineAdapter.Row[] a = new GFitEngineAdapter.Row[1], b = new GFitEngineAdapter.Row[1];
+            GFitEngineAdapter.fitTracks(off, new GFitTrack[] {t}, new int[] {0}, set.events[k], true, s, a);
+            GFitEngineAdapter.fitTracks(off, new GFitTrack[] {t}, new int[] {0}, set.events[k], true, s, b);
+            assertTrue(Double.isNaN(a[0].pDedx) && Double.isNaN(a[0].sigPDedx));
+            assertEquals(0, a[0].flags & (256 | 512));
+            assertEquals(a[0].p, b[0].p, 0);
+            assertEquals(a[0].cost, b[0].cost, 0);
+        }
+        assertEquals(GFitEngineAdapter.config(GFitConfig.Search.FAST).cf()[1], GFitEngineAdapter.config(GFitConfig.Search.FAST, false, false).cf()[1], 0);
+        assertTrue(!GFitEngineAdapter.config(GFitConfig.Search.FAST, false, false).timeOn());
+        assertEquals(new GFitEngineAdapter(GFitConfig.Search.FAST, true).requiredTables(),
+            new GFitEngineAdapter(GFitConfig.Search.FAST, true, false, false).requiredTables());
+        assertEquals(new GFitEngineAdapter(GFitConfig.Search.FAST, true).requiredTables().size() + 9,
+            new GFitEngineAdapter(GFitConfig.Search.FAST, true, true, true).requiredTables().size());
+    }
 }

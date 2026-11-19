@@ -499,7 +499,7 @@
       }, {
         "name": "flags",
         "type": "S",
-        "info": "bit flags: 1 second minimum within cost 1, 2 p or theta outside the start grid, 4 covariance from the Gauss-Newton Hessian, 8 a hit flip won, 16 unused, 32 no ATOF row near the seed, 64 no electron vertex (z prior off), 128 seed from helix fit, 256 ATOF time term used"
+        "info": "bit flags: 1 second minimum within cost 1, 2 p or theta outside the start grid, 4 covariance from the Gauss-Newton Hessian, 8 a hit flip won, 16 unused, 32 no ATOF row near the seed, 64 no electron vertex (z prior off), 128 seed from helix fit, 256 ATOF time term used, 512 dE/dx not applied (fewer than 3 dE/dx hits: p_dedx, sig_p_dedx are the fit's p, sigma)"
       }, {
         "name": "x",
         "type": "F",

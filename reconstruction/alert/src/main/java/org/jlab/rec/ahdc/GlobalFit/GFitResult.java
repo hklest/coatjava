@@ -21,7 +21,7 @@ public final class GFitResult {
 	 * outputs of the dE/dx step (P4 S3, set by {@link SwitchedFit} after the fit, never part of the fit): combined p and sigma_p, ln E,
 	 * dE/dx-alone ln p and its error, hits used, prompt wedge class. NaN / 0 / false after {@link #clear()} and when the switch is off.
 	 */
-	public double pDedx, sigPDedx, dedxLnE, dedxLnp, dedxSigLnp;
+	public double pDedx = Double.NaN, sigPDedx = Double.NaN, dedxLnE = Double.NaN, dedxLnp = Double.NaN, dedxSigLnp = Double.NaN;
 	public int dedxN;
 	public boolean prompt;
 

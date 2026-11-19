@@ -18,6 +18,7 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.rec.ahdc.GlobalFit.AtofPositionTable;
 import org.jlab.rec.ahdc.GlobalFit.AtofTerm;
+import org.jlab.rec.ahdc.GlobalFit.AtofTimeCorrection;
 import org.jlab.rec.ahdc.GlobalFit.CcdbConstants;
 import org.jlab.rec.ahdc.GlobalFit.CellGeometry;
 import org.jlab.rec.ahdc.GlobalFit.FieldGrid;
@@ -33,6 +34,8 @@ import org.jlab.rec.ahdc.GlobalFit.MaterialStack;
 import org.jlab.rec.ahdc.GlobalFit.Propagator;
 import org.jlab.rec.ahdc.GlobalFit.RecoveryPool;
 import org.jlab.rec.ahdc.GlobalFit.StoppingTables;
+import org.jlab.rec.ahdc.GlobalFit.SwitchConstants;
+import org.jlab.rec.ahdc.GlobalFit.SwitchedFit;
 import org.jlab.rec.ahdc.GlobalFit.TrackCost;
 import org.jlab.rec.ahdc.Hit.Hit;
 import org.jlab.rec.ahdc.Hit.HitReader;
@@ -53,6 +56,11 @@ import org.jlab.utils.groups.IndexedTable;
  * <p>
  * Per run: field grid sampled from the solenoid map as MAGFIELDS configured it, wire geometry from the engine's detector,
  * beam position and ATOF tables from CCDB. A missing table skips the fit for the run (no AHDC::gtrack bank), logged once.
+ * <p>
+ * Switches (plan P4, off by default): with {@code gfitTime} the per-half time tables (gfit_time_keys) and the corrected wedge
+ * times of {@link AtofTimeCorrection} (ATOF::hits time and energy, upstream time_offsets, gfit_time_channel, gfit_time_walk);
+ * with {@code gfitDedx} the per-hit AHDC::adc ADC and ped and the dE/dx constants, written as p_dedx, sig_p_dedx and flag 512.
+ * With both off none of this is read or built and the fit runs exactly as without the switches.
  */
 final class GFitEngineAdapter {
 
@@ -74,13 +82,22 @@ final class GFitEngineAdapter {
     private final ThreadLocal<Scratch> scratch = ThreadLocal.withInitial(Scratch::new);
 
     GFitEngineAdapter(GFitConfig.Search search, boolean recovery) {
-        this.cfg = config(search);
+        this(search, recovery, false, false);
+    }
+
+    GFitEngineAdapter(GFitConfig.Search search, boolean recovery, boolean time, boolean dedx) {
+        this.cfg = config(search, time, dedx);
         this.recovery = recovery;
     }
 
     /** the fit configuration of the engine's switches, built here only (the per-run beam is added in {@link Fits}). */
     static GFitConfig config(GFitConfig.Search search) {
-        return GFitConfig.pythonDefault().withSearch(search);
+        return config(search, false, false);
+    }
+
+    static GFitConfig config(GFitConfig.Search search, boolean time, boolean dedx) {
+        GFitConfig c = GFitConfig.pythonDefault().withSearch(search);
+        return time || dedx ? c.withSwitches(time, dedx) : c;
     }
 
     /** CCDB tables the fit needs, as ReconstructionEngine.requireConstants takes them; the per-run check uses the same list. */
@@ -112,17 +129,32 @@ final class GFitEngineAdapter {
         /** index 0 with the electron-vertex z prior, 1 without. */
         final GlobalTrackFitter[] fitter = new GlobalTrackFitter[2];
         final HitRecovery[] rec = new HitRecovery[2];
+        /** switched terms: time table per half (null with gfitTime off), dE/dx constants (null with gfitDedx off), the
+         * switched sequence per z-prior index (null with both switches off). */
+        final AtofPositionTable[] tableTime;
+        final SwitchConstants.DedxConstants dx;
+        final SwitchedFit[] sw;
 
         Fits(GFitConfig base, double[] beam, FieldGrid field, CellGeometry geo, AtofPositionTable[] table, boolean recovery) {
+            this(base, beam, field, geo, table, null, null, recovery);
+        }
+
+        Fits(GFitConfig base, double[] beam, FieldGrid field, CellGeometry geo, AtofPositionTable[] table, AtofPositionTable[] tableTime,
+                SwitchConstants.DedxConstants dx, boolean recovery) {
             this.cfg = base.withBeam(beam[0], beam[1]);
             this.geo = geo;
             this.table = table;
+            this.tableTime = tableTime;
+            this.dx = dx;
             this.prop = new Propagator(field, MaterialStack.dataBest(), StoppingTables.proton(), beam[0], beam[1]);
+            boolean switched = cfg.timeOn() || cfg.dedxOn();
+            this.sw = switched ? new SwitchedFit[2] : null;
             for (int z = 0; z < 2; z++) {
                 GFitConfig c = cfg.withZPrior(z == 0);
                 TrackCost tc = new TrackCost(prop, geo, c);
                 fitter[z] = new GlobalTrackFitter(tc, prop, geo, c);
                 if (recovery) rec[z] = new HitRecovery(fitter[z], tc, geo, c);
+                if (switched) sw[z] = new SwitchedFit(fitter[z], rec[z], prop, geo, StoppingTables.proton());
             }
         }
 
@@ -130,6 +162,7 @@ final class GFitEngineAdapter {
         public int fit(GFitTrack t, GFitEvent ev, boolean zPrior, GFitWorkspace ws, GFitResult out) {
             int z = zPrior ? 0 : 1;
             AtofPositionTable tab = table[ev.half];
+            if (sw != null) return sw[z].run(t, ev, tab, tableTime == null ? null : tableTime[ev.half], true, dx, ws, out);
             fitter[z].fit(t, ev, tab, true, ws, out);
             return rec[z] != null ? rec[z].recover(t, ev, tab, true, out, ws, out) : 0;
         }
@@ -160,9 +193,12 @@ final class GFitEngineAdapter {
         final List<String> missing;
         final Fits fits;
         final IndexedTable t0, t2d;
+        /** wedge time constants of the run (null with gfitTime off). */
+        final SwitchConstants.TimeChannels tc;
 
-        RunContext(int run, AlertDCDetector det, List<String> missing, Fits fits, IndexedTable t0, IndexedTable t2d) {
-            this.run = run; this.det = det; this.missing = missing; this.fits = fits; this.t0 = t0; this.t2d = t2d;
+        RunContext(int run, AlertDCDetector det, List<String> missing, Fits fits, IndexedTable t0, IndexedTable t2d,
+                SwitchConstants.TimeChannels tc) {
+            this.run = run; this.det = det; this.missing = missing; this.fits = fits; this.t0 = t0; this.t2d = t2d; this.tc = tc;
         }
     }
 
@@ -176,10 +212,17 @@ final class GFitEngineAdapter {
             for (String name : requiredTables().keySet()) if (src.table(run, name) == null) missing.add(name);
             Fits fits = null;
             IndexedTable t0 = null, t2d = null;
+            SwitchConstants.TimeChannels tc = null;
             if (missing.isEmpty()) {
-                CcdbConstants consts = new CcdbConstants(src);
+                CcdbConstants consts = new CcdbConstants(src, cfg);
                 AtofPositionTable[] tab = {consts.atofPosition(run, 0), consts.atofPosition(run, 1)};
-                fits = new Fits(cfg, consts.beamXY(run), fieldFromSwim(new Swim()), geometry(det), tab, recovery);
+                AtofPositionTable[] tabTime = null;
+                if (cfg.timeOn()) {
+                    tabTime = new AtofPositionTable[] {tab[0].withTime(consts.timeKeys(run, 0)), tab[1].withTime(consts.timeKeys(run, 1))};
+                    tc = consts.timeChannels(run);
+                }
+                SwitchConstants.DedxConstants dx = cfg.dedxOn() ? consts.dedx(run) : null;
+                fits = new Fits(cfg, consts.beamXY(run), fieldFromSwim(new Swim()), geometry(det), tab, tabTime, dx, recovery);
                 if (recovery) {
                     t0 = src.table(run, T0_TABLE);
                     t2d = src.table(run, T2D_TABLE);
@@ -188,7 +231,7 @@ final class GFitEngineAdapter {
                 LOGGER.severe("ALERT global fit skipped for run " + run + " (no AHDC::gtrack): CCDB table(s) missing: "
                         + String.join(", ", missing));
             }
-            c = new RunContext(run, det, missing, fits, t0, t2d);
+            c = new RunContext(run, det, missing, fits, t0, t2d, tc);
             ctx = c;
             return c;
         }
@@ -258,6 +301,10 @@ final class GFitEngineAdapter {
             double start = mc ? 0.0 : startTime(event);
             GFitEvent ev = event(event, ze, start, c.fits.geo);
             ev.half = half(runBank.getInt("event", 0));
+            if (cfg.timeOn()) {
+                ev.aEnergy = atofEnergy(event);
+                AtofTimeCorrection.correct(ev, c.tc, run);
+            }
             GFitTrack[] in = new GFitTrack[tracks.size()];
             int[] flags = new int[tracks.size()];
             boolean[] inTrack = new boolean[ev.eg.length];
@@ -266,6 +313,7 @@ final class GFitEngineAdapter {
                 double[] seed = seed(kfBank, k, trackBank, t.get_trackId());
                 flags[k] = (seed[4] != 0 ? FLAG_HELIX_SEED : 0) | (el == null ? FLAG_NO_ELECTRON : 0);
                 in[k] = track(t.get_trackId(), t.getHits(), ev, c.fits.geo, cfg.errScale(), seed, inTrack);
+                if (cfg.dedxOn()) dedxInputs(in[k], ev);
             }
             if (recovery) pool(ev, inTrack, cfg, c.t0, c.t2d);
             fitTracks(c.fits, in, flags, ev, el != null, scratch.get(), rows);
@@ -273,6 +321,26 @@ final class GFitEngineAdapter {
         DataBank bank = event.createBank("AHDC::gtrack", rows.length);
         for (int k = 0; k < rows.length; k++) rows[k].write(bank, k);
         event.appendBank(bank);
+    }
+
+    /** ATOF::hits energy per row, in the row order of {@link #event} (input of the corrected wedge time, gfitTime only). */
+    static double[] atofEnergy(DataEvent event) {
+        DataBank a = event.hasBank("ATOF::hits") ? event.getBank("ATOF::hits") : null;
+        int m = a == null ? 0 : a.rows();
+        double[] e = new double[m];
+        for (int r = 0; r < m; r++) e[r] = a.getFloat("energy", r);
+        return e;
+    }
+
+    /** per-hit raw AHDC::adc ADC and ped of the track's hits through their AHDC::adc row (gfitDedx only). */
+    static void dedxInputs(GFitTrack t, GFitEvent ev) {
+        int n = t.nHits();
+        t.hAdc = new double[n];
+        t.hPed = new double[n];
+        for (int i = 0; i < n; i++) {
+            t.hAdc[i] = ev.rAdc[t.hrow[i]];
+            t.hPed[i] = ev.rPed[t.hrow[i]];
+        }
     }
 
     /** vz [cm] of the first pid-11 row of REC::Particle, null when there is none (as the Kalman filter's vertex). */
@@ -488,6 +556,7 @@ final class GFitEngineAdapter {
             w.flags = r.flags | flags;
             w.cost = r.status == 2 || r.status == 4 ? Double.NaN : r.cost;
             w.nHits = r.nh; w.nAdded = added; w.nIter = r.niter; w.nMin = r.nmin;
+            w.pDedx = 1000.0 * r.pDedx; w.sigPDedx = 1000.0 * r.sigPDedx;      // GeV to MeV as p; NaN unless gfitDedx
             w.atofSector = atof[0]; w.atofLayer = atof[1]; w.atofComp = atof[2];
             if (r.status != 0) {
                 w.x = w.y = w.z = w.px = w.py = w.pz = w.d0 = w.phi0 = w.p = w.z0 = w.theta = Double.NaN;
