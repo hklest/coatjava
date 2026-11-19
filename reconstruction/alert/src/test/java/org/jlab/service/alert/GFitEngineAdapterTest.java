@@ -252,6 +252,10 @@ public class GFitEngineAdapterTest {
 
     /** Fits with the given switches and the fixture constants of run 23014 (time tables per half, dE/dx class_var_all). */
     private static GFitEngineAdapter.Fits switchedFits(boolean time, boolean dedx) {
+        return switchedFits(time, dedx, new double[] {-1.05, 0.0});
+    }
+
+    private static GFitEngineAdapter.Fits switchedFits(boolean time, boolean dedx, double[] beam) {
         GFitFixtures.Fx f = GFitFixtures.resource("unit/field.txt.gz");
         double[] fp = f.d("field_par");
         FieldGrid field = FieldGrid.fromArrays(fp[0], fp[1], fp[2], fp[3], f.shape("br")[0], f.shape("br")[1], f.d("br"), f.d("bz"));
@@ -261,7 +265,7 @@ public class GFitEngineAdapterTest {
             ? new org.jlab.rec.ahdc.GlobalFit.AtofPositionTable[] {tab[0].withTime(fc.timeKeys(23014, 0)), tab[1].withTime(fc.timeKeys(23014, 1))}
             : null;
         GFitConfig cfg = GFitEngineAdapter.config(GFitConfig.Search.FAST, time, dedx);
-        return new GFitEngineAdapter.Fits(cfg, new double[] {-1.05, 0.0}, field, geometry(), tab, tt, dedx ? fc.dedx(23014) : null, true);
+        return new GFitEngineAdapter.Fits(cfg, beam, field, geometry(), tab, tt, dedx ? fc.dedx(23014) : null, true);
     }
 
     /** t60 tracks as the engine would hand them over with the switches on: raw AHDC::adc ADC and ped per event row, fixture ATOF times. */
@@ -341,5 +345,24 @@ public class GFitEngineAdapterTest {
             new GFitEngineAdapter(GFitConfig.Search.FAST, true, false, false).requiredTables());
         assertEquals(new GFitEngineAdapter(GFitConfig.Search.FAST, true).requiredTables().size() + 9,
             new GFitEngineAdapter(GFitConfig.Search.FAST, true, true, true).requiredTables().size());
+    }
+
+    /** a thread's dE/dx scratch made for one run's propagator is not reused with the next run's (new Fits per run). */
+    @Test
+    public void dedxScratchFollowsRun() {
+        GFitReplaySet set = switchSet();
+        GFitEngineAdapter.Fits run1 = switchedFits(false, true, new double[] {-1.05, 0.0});
+        GFitEngineAdapter.Fits run2 = switchedFits(false, true, new double[] {1.5, -0.8});
+        GFitEngineAdapter.Scratch shared = new GFitEngineAdapter.Scratch();
+        int k = 3;
+        GFitTrack t = set.tracks[k];
+        GFitEngineAdapter.dedxInputs(t, set.events[k]);
+        GFitEngineAdapter.Row[] a = new GFitEngineAdapter.Row[1], b = new GFitEngineAdapter.Row[1];
+        GFitEngineAdapter.fitTracks(run1, new GFitTrack[] {t}, new int[] {0}, set.events[k], true, shared, a);
+        GFitEngineAdapter.fitTracks(run2, new GFitTrack[] {t}, new int[] {0}, set.events[k], true, shared, a);
+        GFitEngineAdapter.fitTracks(run2, new GFitTrack[] {t}, new int[] {0}, set.events[k], true, new GFitEngineAdapter.Scratch(), b);
+        assertTrue(Double.isFinite(b[0].pDedx));
+        assertEquals(b[0].pDedx, a[0].pDedx, 0);
+        assertEquals(b[0].sigPDedx, a[0].sigPDedx, 0);
     }
 }

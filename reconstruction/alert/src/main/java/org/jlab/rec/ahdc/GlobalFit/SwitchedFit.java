@@ -1,5 +1,8 @@
 package org.jlab.rec.ahdc.GlobalFit;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * The whole fit sequence of one track with the two switches (P4 D1, D5, D6), as one call for the replay and the engine adapter:
  * the fit (the default fit, or the time fit with the time table), the hit recovery when a {@link HitRecovery} is given, and with the
@@ -19,6 +22,8 @@ package org.jlab.rec.ahdc.GlobalFit;
  */
 public final class SwitchedFit {
 
+	private static final Logger LOGGER = Logger.getLogger(SwitchedFit.class.getName());
+
 	private final GlobalTrackFitter fitter;
 	private final HitRecovery rec;
 	private final Propagator prop;
@@ -30,12 +35,17 @@ public final class SwitchedFit {
 	public static final class Scratch {
 		final DedxHits hits;
 		final DedxProfile prof;
+		/** propagator and wire table the hit geometry was built with: the engine builds new ones per run. */
+		final Propagator prop;
+		final CellGeometry geo;
 		final GFitResult dflt;
 		final double[] x, lnu, rec = new double[AtofTerm.NI], assoc = new double[4];
 		final boolean[] use;
 		int nKept;
 
 		Scratch(Propagator prop, CellGeometry geo, StoppingTables st, int maxHits) {
+			this.prop = prop;
+			this.geo = geo;
 			hits = new DedxHits(prop, geo, st, maxHits);
 			prof = new DedxProfile(st);
 			dflt = new GFitResult(maxHits);
@@ -76,7 +86,7 @@ public final class SwitchedFit {
 		}
 		if (t.hAdc == null || t.hPed == null) throw new IllegalArgumentException("dE/dx switch on: track without hAdc/hPed");
 		Scratch s = ws.sw;
-		if (s == null) s = ws.sw = new Scratch(prop, geo, st, ws.cap - GFitConfig.NADD - GFitConfig.NMISS);
+		if (s == null || s.prop != prop || s.geo != geo) s = ws.sw = new Scratch(prop, geo, st, ws.cap - GFitConfig.NADD - GFitConfig.NMISS);
 		final GFitResult d = timeOn ? s.dflt : out;
 		fitter.fit(t, ev, tabDefault, bankTimes, ws, d);
 		boolean prompt = false, ok = true;
@@ -84,6 +94,7 @@ public final class SwitchedFit {
 			prompt = hitsAndPrompt(t, ev, bankTimes, dx, ws, s, d);
 		} catch (RuntimeException e) {
 			ok = false;
+			LOGGER.log(Level.FINE, "dE/dx hit step failed for track " + t.trackid, e);
 		}
 		if (timeOn) fitter.fit(t, ev, tabTime, bankTimes, ws, out);
 		final int added = rec != null ? rec.recover(t, ev, tab, bankTimes, out, ws, out) : 0;
@@ -91,6 +102,7 @@ public final class SwitchedFit {
 			try {
 				profile(ev, dx, s, out, prompt);
 			} catch (RuntimeException e) {
+				LOGGER.log(Level.FINE, "dE/dx profile failed for track " + t.trackid, e);
 				out.pDedx = Double.NaN; out.sigPDedx = Double.NaN; out.dedxLnE = Double.NaN; out.dedxLnp = Double.NaN;
 				out.dedxSigLnp = Double.NaN; out.dedxN = 0; out.prompt = false;
 			}

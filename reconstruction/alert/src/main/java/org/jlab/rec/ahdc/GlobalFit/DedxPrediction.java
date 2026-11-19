@@ -59,12 +59,6 @@ public final class DedxPrediction {
 		return xi * (Math.log(2 * ME_MEV * b2 * g2 / gasI) + Math.log(xi / gasI) + 0.200 - b2);
 	}
 
-	/** zoa of the gas in the stopping tables. */
-	public double zoa() { return zoa; }
-
-	/** I of the gas [MeV]. */
-	public double gasI() { return gasI; }
-
 	/** kinetic energy [MeV] after the grammage x [g/cm2] from tvert [MeV]; 0 if stopped (DX:81-88 _t_hit with mscale 1). */
 	private double tHit(double r0, double x) {
 		double rr = r0 - x;

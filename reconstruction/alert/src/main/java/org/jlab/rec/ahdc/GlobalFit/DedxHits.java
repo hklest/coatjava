@@ -14,7 +14,7 @@ package org.jlab.rec.ahdc.GlobalFit;
  *
  * <p>Constants that D2's holder feeds as plain arguments: {@code offset} = dx_offset (8, additive ADC offsets by layer index,
  * subtracted), {@code f3} = dx_f3[half] (10: gains of layers 1..7, doca per mm, ped per 50, path exponent), {@code f3Norm} =
- * dx_f3_norm[half], with half = tag_event % 2 of the track.
+ * dx_f3_norm[half], with half = the track's half (GFitEvent.half).
  */
 public final class DedxHits {
 

@@ -69,7 +69,7 @@ public final class SwitchConstants {
 	 * Constants of the dE/dx term of one run (P4 D4; export_switch_dedx.py dx_* arrays): the response line a, g, ln c, the ADC offsets,
 	 * the F3 corrections, the toy tables (tau, sigma per half, hit count and beta*gamma node, and the standardised pdf per half and hit
 	 * count) and the class variance [half][prompt][hit-count class]. Per-half rows are indexed by the half that uses them. The arrays
-	 * are shared, not copied: callers must not modify them. {@link #withClassVar} serves the other class-variance set.
+	 * are shared, not copied: callers must not modify them.
 	 */
 	public static final class DedxConstants {
 		/** response a, g, ln c of the reference run and of this run; a_run = a + (lnc - lnc_ref) (comb_run.py:278-279). */
@@ -94,6 +94,9 @@ public final class SwitchConstants {
 			if (offset.length != DX_NLAYER || f3.length != 2 || f3[0].length != DX_NF3 || f3[1].length != DX_NF3 || f3Norm.length != 2
 				|| sigInst.length != 2 || effPar.length != 2 || toyBg.length != DX_NBG || zgrid.length != DX_NZ)
 				throw new IllegalArgumentException("dedx constants: bad array length");
+			if (toyTau.length != 2 || toySig.length != 2 || pdf.length != 2 || classVar.length != 2 || classVar[0].length != 2
+				|| classVar[1].length != 2 || classVar[0][0].length != 3)
+				throw new IllegalArgumentException("dedx constants: need 2 halves");
 			for (int h = 0; h < 2; h++) {
 				if (toyTau[h].length != DX_NN || toySig[h].length != DX_NN || pdf[h].length != DX_NN)
 					throw new IllegalArgumentException("dedx constants: toy tables need " + DX_NN + " hit counts");
@@ -101,9 +104,6 @@ public final class SwitchConstants {
 					if (toyTau[h][n].length != DX_NBG || toySig[h][n].length != DX_NBG || pdf[h][n].length != DX_NZ - 1)
 						throw new IllegalArgumentException("dedx constants: bad toy table row");
 			}
-			if (toyTau.length != 2 || toySig.length != 2 || pdf.length != 2 || classVar.length != 2 || classVar[0].length != 2
-				|| classVar[1].length != 2 || classVar[0][0].length != 3)
-				throw new IllegalArgumentException("dedx constants: need 2 halves");
 			this.a = a;
 			this.g = g;
 			this.lnCRef = lnCRef;
@@ -122,11 +122,6 @@ public final class SwitchConstants {
 			this.zgrid = zgrid;
 			this.pdf = pdf;
 			this.classVar = classVar;
-		}
-
-		/** the same constants with another class-variance set (arrays shared). */
-		public DedxConstants withClassVar(double[][][] cv) {
-			return new DedxConstants(a, g, lnCRef, lnC, offset, f3, f3Norm, sigInst, effPar, toyBg, toyTau, toySig, zgrid, pdf, cv);
 		}
 	}
 }

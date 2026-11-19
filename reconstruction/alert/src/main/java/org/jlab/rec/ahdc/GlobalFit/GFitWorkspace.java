@@ -71,7 +71,7 @@ public final class GFitWorkspace {
 	public double fAtof;
 	/** scratch of predict and cost. */
 	final int[] PF1;
-	final double[] pcaG, pcaD, pcaR = new double[12], nomX, pertD, pertX, gradG, upert = new double[NPAR];
+	final double[] pcaG, pcaD, pcaR = new double[10], nomX, pertD, pertX, gradG, upert = new double[NPAR];
 	final double[] box3 = new double[3], cell4 = new double[4], o9 = new double[9], o9b = new double[9], jx5 = new double[5],
 		j53 = new double[15], sArc1 = new double[1];
 
