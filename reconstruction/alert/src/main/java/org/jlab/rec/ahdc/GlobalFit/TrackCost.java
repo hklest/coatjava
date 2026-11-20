@@ -4,7 +4,7 @@ package org.jlab.rec.ahdc.GlobalFit;
  * Prediction, cost, gradient and both Hessians of one track at a fixed state: ports fit._predict (fit.py:328-387) for the
  * helix model (imodel 0) and the propagation model (imodel 1, forward differences of the whole propagation; the kink
  * columns restart from the nominal snapshots) and fit._cost (fit.py:391-442), with the hit-list setup of
- * fit._eval_track (fit.py:881-906). All scratch lives in the {@link GFitWorkspace}; the ATOF term is a hook (S3).
+ * fit._eval_track (fit.py:881-906). All scratch lives in the {@link GFitWorkspace}; the ATOF term comes from {@link AtofTerm}.
  */
 public final class TrackCost {
 
