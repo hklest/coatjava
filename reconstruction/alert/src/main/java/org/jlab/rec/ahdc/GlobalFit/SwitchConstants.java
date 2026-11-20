@@ -66,7 +66,7 @@ public final class SwitchConstants {
 	public static final int DX_NN = 17, DX_NBG = 36, DX_NZ = 321, DX_NLAYER = 8, DX_NF3 = 10;
 
 	/**
-	 * Constants of the dE/dx term of one run (P4 D4; export_switch_dedx.py dx_* arrays): the response line a, g, ln c, the ADC offsets,
+	 * Constants of the dE/dx term of one run: the response line a, g, ln c, the ADC offsets,
 	 * the F3 corrections, the toy tables (tau, sigma per half, hit count and beta*gamma node, and the standardised pdf per half and hit
 	 * count) and the class variance [half][prompt][hit-count class]. Per-half rows are indexed by the half that uses them. The arrays
 	 * are shared, not copied: callers must not modify them.

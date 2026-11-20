@@ -5,7 +5,7 @@ import java.util.List;
 import org.jlab.utils.groups.IndexedTable;
 
 /**
- * {@link GFitConstants} read from CCDB tables (plan D7, D8). The tables come through a {@link TableSource}, so the engine
+ * {@link GFitConstants} read from CCDB tables. The tables come through a {@link TableSource}, so the engine
  * adapter passes {@code ConstantsManager::getConstants}; this class is the only one of the package that knows
  * {@link IndexedTable}. The beam position is 10 x (/geometry/beam/position + /geometry/alert/ahdc/beam_offset), cm to mm,
  * index (0, 0, 0). Both halves get the pooled ATOF table of /calibration/alert/atof/gfit_position and gfit_bar_z with the
@@ -153,7 +153,7 @@ public final class CcdbConstants implements GFitConstants {
 		EFF_COLUMNS = {"eff_lnthr", "eff_width", "eff_plateau"};
 
 	/**
-	 * the dE/dx constants (plan D8) of the five {@link GFitConstants#DEDX_TABLES}: gfit_dedx row (0, 0, half) (a, g, lnc_ref, lnc
+	 * the dE/dx constants of the five {@link GFitConstants#DEDX_TABLES}: gfit_dedx row (0, 0, half) (a, g, lnc_ref, lnc
 	 * and the run-wide values are read from half 0; sig_inst, eff_*, F3 and f3_norm per half, the half that uses them, never swapped),
 	 * gfit_dedx_offset (0, li, 0), gfit_dedx_toy (half, n, k; bg, tau, sig), gfit_dedx_pdf (half, n, iz) and gfit_dedx_classvar
 	 * (half, prompt, class), which holds the class_var_all set. The z grid is the fixed linspace(-6, 10, 321); n = 0 rows are zeros.

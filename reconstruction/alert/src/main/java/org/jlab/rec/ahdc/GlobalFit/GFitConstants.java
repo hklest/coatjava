@@ -13,7 +13,7 @@ public interface GFitConstants {
 	/** CCDB index depth of every table of the fit (as AHDCEngine and ATOFEngine request their tables). */
 	int DEPTH = 3;
 
-	/** beam position (x, y) in mm, AHDC frame (plan D8). */
+	/** beam position (x, y) in mm, AHDC frame. */
 	double[] beamXY(int run);
 
 	/** ATOF position parameters and bar recalibration for tracks of {@code half} (0 or 1) of run {@code run}. */

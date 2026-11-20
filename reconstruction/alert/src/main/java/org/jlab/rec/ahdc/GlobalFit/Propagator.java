@@ -7,7 +7,7 @@ package org.jlab.rec.ahdc.GlobalFit;
  * loss, CSDA range for solids, a Newton correction onto the last cylinder of each region, Highland variances per scattering
  * plane and direction kinks at the planes. The arithmetic follows the Python operation by operation.
  *
- * <p>Snapshot and restart (plan D8): with {@code ws.saveSnapshots} set, {@link #run} saves, at each kink plane 0-4, the
+ * <p>Snapshot and restart: with {@code ws.saveSnapshots} set, {@link #run} saves, at each kink plane 0-4, the
  * complete internal state just before the kink rotation, and copies the nominal node table to {@code ws.outNom} with the
  * nominal results. {@link #runRestart} restores the snapshot of a plane, copies the nominal node prefix and executes the
  * same loop code from the kink on, so for a state that differs from the nominal one only in the kinks of that plane (and

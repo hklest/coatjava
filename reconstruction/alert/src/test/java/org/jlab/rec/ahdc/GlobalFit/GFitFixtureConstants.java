@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * Test provider of {@link GFitConstants} from fixture unit/atof_tables.txt.gz: run 23014 serves per half the table fitted on
  * the other half (the Python 23014 fit, atof.load_par with paths [h0, h1]), every other run the pooled table; the beam is
- * (-1.05, 0) mm (plan D8). {@code bankTimes} selects the t_deployed_entry_* time keys (engine), else t_final_entry_* (faithful).
+ * (-1.05, 0) mm. {@code bankTimes} selects the t_deployed_entry_* time keys (engine), else t_final_entry_* (faithful).
  */
 public final class GFitFixtureConstants implements GFitConstants {
 

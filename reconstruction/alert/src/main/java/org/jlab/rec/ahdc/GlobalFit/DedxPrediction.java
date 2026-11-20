@@ -1,7 +1,7 @@
 package org.jlab.rec.ahdc.GlobalFit;
 
 /**
- * dE/dx prediction of a track on the ln p grid (P4 D6, porting spec STEP 2; pinned Python est/dedx.py): for each grid momentum the
+ * dE/dx prediction of a track on the ln p grid (reference: est/dedx.py): for each grid momentum the
  * geometric mean over the kept hits of the Landau most probable deposit and of beta*gamma at the hit (residual range of each hit),
  * the toy tau and sigma at the track's hit count, and the inversion of the prediction curve. Proton only (mass M, z2 = 1, family 0).
  * One instance per thread: it owns the scratch arrays, {@link #pred0}, {@link #sgc} and the slope of the last {@link #invert}.

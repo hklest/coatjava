@@ -1,7 +1,7 @@
 package org.jlab.rec.ahdc.GlobalFit;
 
 /**
- * The ATOF time correction of the time switch (plan D2): the bank time of a wedge row is brought back to the engine time before
+ * The ATOF time correction of the time switch: the bank time of a wedge row is brought back to the engine time before
  * any T0, then the calibrated T0 and the gain-group walk are applied, as the pinned Python does:
  * <pre>
  *   t = t_bank + dep_t0 + (run - dep_icpt) * dep_slope - t0[ch] - W_g(x)           (atof_cal.py:10, 202-212: t_c = t_dep + t0_dep + dt_dep - t0_c - dt_c;

@@ -12,7 +12,7 @@ import org.junit.Test;
 
 /**
  * GlobalTrackFitter in FULL mode on the 60-track subset t60 (final ATOF times, per-half 23014 tables) against the pinned
- * Python fit: tiers 1-3 of parent plan D5, a 2-hit track and a NaN doca. Also hosts the shared setup of the fit tests.
+ * Python fit: fidelity tiers 1-3, a 2-hit track and a NaN doca. Also hosts the shared setup of the fit tests.
  */
 public class GFitFullSearchTest {
 

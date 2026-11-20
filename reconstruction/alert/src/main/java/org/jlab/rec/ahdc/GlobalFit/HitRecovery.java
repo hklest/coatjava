@@ -8,7 +8,7 @@ import java.util.Arrays;
  * layers (recover.crossings, recover.py:140-166 with fit._layer_point, fit.py:503); the event's pool rows (no finder track) within
  * +-poolW wires of the crossing wire (build_pool, recover.py:182-209) are evaluated as hits of the fitted state with the ATOF term
  * off (probe, recover.py:224-256); the best row per missing layer inside the windows (pass_windows, select, recover.py:274-292)
- * is added and the track refitted (the full search, plan D4 as amended); the refit is accepted when it converged and
+ * is added and the track refitted (the full search); the refit is accepted when it converged and
  * F1 - F0 &lt;= q n_add (_accept, recover.py:333-338); a rejected refit with two or more added rows is retried once without the
  * row of lowest likelihood in the refit's hit list (one_round, recover.py:359-387). A second round runs on accepted tracks only, on top
  * of the accepted rows and against the new result (recover, recover.py:392-420). Immutable and thread safe: all scratch is in

@@ -1,7 +1,7 @@
 package org.jlab.rec.ahdc.GlobalFit;
 
 /**
- * Post-fit dE/dx profile of a track (P4 D6, porting spec STEP 3; pinned Python est/dedx.py, comb_dedx.py, dedx_run.py): the track
+ * Post-fit dE/dx profile of a track (reference: est/dedx.py, comb_dedx.py, dedx_run.py): the track
  * statistic ln E, the response curve a + g pred0, the dE/dx-alone ln p, and the one-dimensional profile in ln p around the base fit
  * (chi2 = (ln p - ln p_base)^2 / v - 2 ln f_toy + 2 ln sigma), minimised on the grid inside a window with parabolic refinement. The
  * outputs {@link #pDedx} and {@link #sigPDedx} go to the bank (state and covariance untouched). One instance per thread; the

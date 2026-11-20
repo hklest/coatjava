@@ -10,7 +10,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- * The switched sequence {@link SwitchedFit} on the t60 tracks (plan P4 S3): the dE/dx step on the fit's own default-fit state with
+ * The switched sequence {@link SwitchedFit} on the t60 tracks: the dE/dx step on the fit's own default-fit state with
  * Python's constants against switch/t60/expected_ge10_dedx (dE/dx alone, no recovery) and expected_ge10_all (time fit, recovery and
  * dE/dx), and the switches-off sequence against the plain fit and recovery.
  */

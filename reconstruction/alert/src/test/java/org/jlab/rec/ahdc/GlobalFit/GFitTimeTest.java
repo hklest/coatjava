@@ -11,9 +11,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- * The ATOF time term (plan P4 S2): the ge10_t configuration of {@link AtofTerm} (cost, gradient, Hessians) against the pin's
+ * The ATOF time term: the ge10_t configuration of {@link AtofTerm} (cost, gradient, Hessians) against the pin's
  * atof.term_cost on the states of switch/cost_time, the time fit and the time fit plus recovery on t60 against ge10_t and ge10_trec
- * (parent plan D5 tiers 1-3), and a missing start time. Flag 256 is carried in GFitResult.flags; no comparison here or in the
+ * (fidelity tiers 1-3), and a missing start time. Flag 256 is carried in GFitResult.flags; no comparison here or in the
  * harness reads that bit (tiers use bits 1 and 8), so Python's flags, which have no 256, need no masking.
  */
 public class GFitTimeTest {

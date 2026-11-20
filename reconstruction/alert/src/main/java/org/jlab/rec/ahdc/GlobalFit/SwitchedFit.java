@@ -4,7 +4,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The whole fit sequence of one track with the two switches (P4 D1, D5, D6), as one call for the replay and the engine adapter:
+ * The whole fit sequence of one track with the two switches, as one call for the replay and the engine adapter:
  * the fit (the default fit, or the time fit with the time table), the hit recovery when a {@link HitRecovery} is given, and with the
  * dE/dx switch on the post-fit dE/dx step.
  *

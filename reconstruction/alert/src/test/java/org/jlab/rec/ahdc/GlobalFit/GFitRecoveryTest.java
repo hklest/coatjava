@@ -12,7 +12,7 @@ import org.junit.Test;
 /**
  * HitRecovery on the 60-track subset t60 (full search, final ATOF times, per-half 23014 tables) against the pinned Python
  * recovery (recover.py): crossings and probe table at the stored baseline state, accepted rows and the result after recovery
- * (tiers 1-3 of parent plan D5), and the drop-worst retry.
+ * (fidelity tiers 1-3: status and hit set, cost and parameters, cost bound), and the drop-worst retry.
  */
 public class GFitRecoveryTest {
 

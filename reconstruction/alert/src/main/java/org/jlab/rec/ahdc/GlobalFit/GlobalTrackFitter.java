@@ -5,7 +5,7 @@ package org.jlab.rec.ahdc.GlobalFit;
  * dbox hit term, no missing wires, no added hits, ATOF position term on), with the start grid fit._grid (fit.py:552-596),
  * the outer theta0 passes fit._outer (fit.py:859-878), the near-wire flips, the covariance 2 H^-1 of the exact Hessian by
  * eigen decomposition and the status, flag and counter rules of fit.py:819-856. Search mode FULL is the Python sequence
- * (3 grid starts plus the seed start, helix prefit, outer passes, flips). Search mode FAST (plan D5) runs the seeded fit of
+ * (3 grid starts plus the seed start, helix prefit, outer passes, flips). Search mode FAST runs the seeded fit of
  * the rule in {@link GFitConfig#fastRule()} and falls back to a from-scratch FULL fit when the rule's trigger fires or the seed
  * momentum is not finite or at most 0.03 GeV; rule 6 is the full search for every track. Immutable and thread safe; every
  * scratch array is in the {@link GFitWorkspace} and nothing is allocated inside {@link #fit}. Any exception inside a track
@@ -58,7 +58,7 @@ public final class GlobalTrackFitter {
 		}
 	}
 
-	// ================================================================== fast search (plan D5, D3 ladder)
+	// ================================================================== fast search
 
 	private void full(GFitTrack t, GFitEvent ev, GFitWorkspace ws, GFitResult out) {
 		core(t, ev, ws, out, GFitConfig.Starts.GRID_B0.code, cfg.nFlip());

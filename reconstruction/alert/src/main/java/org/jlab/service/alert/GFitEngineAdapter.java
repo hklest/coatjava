@@ -57,7 +57,7 @@ import org.jlab.utils.groups.IndexedTable;
  * Per run: field grid sampled from the solenoid map as MAGFIELDS configured it, wire geometry from the engine's detector,
  * beam position and ATOF tables from CCDB. A missing table skips the fit for the run (no AHDC::gtrack bank), logged once.
  * <p>
- * Switches (plan P4, off by default): with {@code gfitTime} the per-half time tables (gfit_time_keys) and the corrected wedge
+ * Switches (off by default): with {@code gfitTime} the per-half time tables (gfit_time_keys) and the corrected wedge
  * times of {@link AtofTimeCorrection} (ATOF::hits time and energy, upstream time_offsets, gfit_time_channel, gfit_time_walk);
  * with {@code gfitDedx} the per-hit AHDC::adc ADC and ped and the dE/dx constants, written as p_dedx, sig_p_dedx and flag 512.
  * With both off none of this is read or built and the fit runs exactly as without the switches.
@@ -285,7 +285,7 @@ final class GFitEngineAdapter {
             DataBank kfBank, DataBank trackBank, DataBank runBank, boolean mc) {
         try {
             fill(event, run, det, src, tracks, kfBank, trackBank, runBank, mc);
-        } catch (RuntimeException e) {      // the fit must never change the other banks (plan D14)
+        } catch (RuntimeException e) {      // the fit must never change the other banks
             if (reported.add(run)) LOGGER.log(Level.SEVERE, "ALERT global fit failed for an event of run " + run + "; no AHDC::gtrack for it", e);
         }
     }
@@ -485,7 +485,7 @@ final class GFitEngineAdapter {
     }
 
     /**
-     * Recovery pool of the event (plan D11): AHDC::adc rows on no track and with a known wire, time = leading edge - t0 - start
+     * Recovery pool of the event: AHDC::adc rows on no track and with a known wire, time = leading edge - t0 - start
      * through the CCDB time offsets and {@link HitReader#timeToDistance}; empty without a start time.
      */
     static void pool(GFitEvent ev, boolean[] inTrack, GFitConfig cfg, IndexedTable t0, IndexedTable t2d) {
@@ -517,7 +517,7 @@ final class GFitEngineAdapter {
 
     /**
      * Fits tracks[k] (z prior when the event has an electron; without one the grid starts at the seed z, or 0) into rows[k];
-     * an exception inside one track gives status 4 for it and leaves the others alone (plan D14).
+     * an exception inside one track gives status 4 for it and leaves the others alone.
      */
     static void fitTracks(TrackFit fit, GFitTrack[] tracks, int[] flags, GFitEvent ev, boolean zPrior, Scratch s, Row[] rows) {
         int maxHits = 0;

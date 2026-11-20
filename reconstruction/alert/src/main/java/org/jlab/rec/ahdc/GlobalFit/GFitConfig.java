@@ -6,7 +6,7 @@ package org.jlab.rec.ahdc.GlobalFit;
  * arrays {@code _cfarr}/{@code _ciarr} (fit.py:1038-1054, values in fixture unit/config.txt), the grid constants and
  * finite-difference steps of fit.py, the recovery windows of the ge9 freeze file, and the search mode.
  * {@link #pythonDefault()} is the Python configuration; the {@code with*} methods return modified copies. The FAST constants
- * (rule 6, c95) are those of search_measure.json of the P3 search measurement (md5
+ * (rule 6, c95) are those of the reference's search measurement (md5
  * 6dd26bbd8cde71c5e6ffe1314cccc51a).
  */
 public final class GFitConfig {
@@ -95,10 +95,10 @@ public final class GFitConfig {
 
 	public GFitConfig withStarts(Starts s) { GFitConfig c = copy(); c.starts = s; return c; }
 
-	/** beam position (x, y) in mm, AHDC frame: the CCDB value of the run (plan D8) in place of the Python default (-1.05, 0). */
+	/** beam position (x, y) in mm, AHDC frame: the CCDB value of the run in place of the Python default (-1.05, 0). */
 	public GFitConfig withBeam(double x, double y) { GFitConfig c = copy(); c.beamX = x; c.beamY = y; return c; }
 
-	/** electron-vertex z prior on or off (off for an event without an electron, plan D14). */
+	/** electron-vertex z prior on or off (off for an event without an electron). */
 	public GFitConfig withZPrior(boolean on) { GFitConfig c = copy(); c.zOn = on; return c; }
 
 	/** ATOF time correction switch (time_offsets, walk and T0 tables, SwitchConstants) and dE/dx term switch. */
