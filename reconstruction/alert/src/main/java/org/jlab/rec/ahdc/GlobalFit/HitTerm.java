@@ -93,8 +93,15 @@ public final class HitTerm {
 	 * the flag (1 no root, 2 PCA outside the wire). gs and ds are scratch of length >= nn; res4 must have length >= 10
 	 * (slots 4..9 are scratch of the Hermite evaluation). With res4.length > 10 slot 10 receives the arc length s of the PCA
 	 * (prop._pca1 return value s = a[i0].s + tau (a[i0+1].s - a[i0].s), prop.py:838; NaN with flag 1 and no valid segment).
+	 * A trajectory of fewer than two nodes (the track stopped at its first step) has no segment either: the reference reads
+	 * outside its node table there (a[-1], numpy wrap-around), this port returns the NaN result instead of throwing.
 	 */
 	public static int pca1(double[] a, int nn, double[] wo, double[] we, int g, double[] gs, double[] ds, double[] res4) {
+		if (nn < 2) {
+			res4[0] = res4[1] = res4[2] = res4[3] = Double.NaN;
+			if (res4.length > 10) res4[10] = Double.NaN;
+			return 1;
+		}
 		int b = 3 * g;
 		double ax = wo[b], ay = wo[b + 1], az = wo[b + 2];
 		double l0 = Math.sqrt((we[b] - ax) * (we[b] - ax) + (we[b + 1] - ay) * (we[b + 1] - ay) + (we[b + 2] - az) * (we[b + 2] - az));

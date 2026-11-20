@@ -294,4 +294,16 @@ public class GFitCostTest {
 		double us = (System.nanoTime() - t0) / 1e3 / reps;
 		System.out.printf("cost(want) at a 15-parameter state with %d hits: %.1f us (Python one gradient = 16 propagations, 500 us)%n", ws.nh, us);
 	}
+
+	/** a trajectory of a single node (the track stopped at its first step) has no segment: NaN result, flag 1, no exception. */
+	@Test
+	public void pcaOfSingleNodeIsNaN() {
+		int nc = GFitWorkspace.NC;
+		double[] a = new double[4 * nc];
+		a[1] = 10.0; a[4] = 1.0;      // node 0 at x = 10 mm moving along x
+		double[] wo = {0, 0, -100}, we = {0, 0, 100}, gs = new double[4], ds = new double[4], r = new double[11];
+		int f = HitTerm.pca1(a, 1, wo, we, 0, gs, ds, r);
+		assertEquals(1, f);
+		for (int k : new int[] {0, 1, 2, 3, 10}) assertTrue(Double.isNaN(r[k]));
+	}
 }
