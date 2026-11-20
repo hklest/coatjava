@@ -8,7 +8,7 @@ package org.jlab.rec.ahdc.GlobalFit;
  * <p>{@link #compute} propagates the state, and for every original hit with a bank row (kind 0, row >= 0): the PCA arc
  * length s (HitTerm.pca1 slot 10), the in-cell path (0.04 mm steps over s +- 10 mm, cell margin > 0), the grammage X from the
  * vertex to the hit, and with the calibration constants ln u = ln(max(ADC - offset, 1e-3)) - ln G - (ln Delta_p - gm). Hits
- * with no PCA, a failed interpolation or a path <= 0.05 mm are dropped (not kept). Results are in the public fields, per hit
+ * with no PCA, a failed interpolation or a path &lt;= 0.05 mm are dropped (not kept). Results are in the public fields, per hit
  * indexed like the result's hit list (original hits come first, the same index as GFitTrack.hg); entries of hits that are not kept hold
  * NaN (path, s, X, lnu) and false (kept, use). One instance per thread, never shared; nothing is allocated per call.
  *

@@ -27,11 +27,11 @@ public final class DedxProfile {
 	/** ln E of the used hits and their number (DX:517-526 track_stat); NaN for none. */
 	public double lnE;
 	public int n;
-	/** dE/dx alone (CD:97-105): ln p of the inversion (NaN for n < 3) and its error (ln p, from the unmasked inversion). */
+	/** dE/dx alone (CD:97-105): ln p of the inversion (NaN for n &lt; 3) and its error (ln p, from the unmasked inversion). */
 	public double dedxLnp, dedxSigLnp;
-	/** class variance used (1.0 for n < 3), profile minimum and error in ln p (NaN where undefined). */
+	/** class variance used (1.0 for n &lt; 3), profile minimum and error in ln p (NaN where undefined). */
 	public double classVar, profLnp, profErr;
-	/** outputs of the bank: combined p and sigma_p (base ones when n < 3), NaN if the base failed or the profile is not finite. */
+	/** outputs of the bank: combined p and sigma_p (base ones when n &lt; 3), NaN if the base failed or the profile is not finite. */
 	public double pDedx, sigPDedx;
 	/** 0 if p_dedx is valid, else 1; flags {@link #FLAG_FEWHITS} or 0. */
 	public int status, flags;
